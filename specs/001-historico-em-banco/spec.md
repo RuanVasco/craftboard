@@ -57,7 +57,8 @@ No primeiro startup com banco vazio, gravar um snapshot inicial de cada jogador 
 - Jogador visto pela primeira vez depois do backfill inicial ganha um snapshot zerado antes do atual, então o total dele conta inteiro no período. Sem snapshot antes de `from`, a base é o primeiro snapshot do jogador.
 - Ranking por período omite quem não ganhou nada no período.
 - `captured_at` é a hora em que o craftboard gravou, não o mtime do arquivo.
-- Sessões são reconciliadas com a lista completa do `list` a cada mudança (abre para quem entrou, fecha para quem saiu, fecha todas se o servidor cair). Ainda sem endpoint: último acesso e horário de pico ficam para quando o front usar.
+- O histórico do jogador devolve no máximo 500 pontos. Acima disso, fica o último snapshot de cada faixa de tempo.
+- Sessões são reconciliadas com a lista completa do `list` a cada poll, mudando ou não (abre para quem entrou, fecha para quem saiu, fecha todas se o servidor cair). Assim uma falha de banco se corrige no poll seguinte. Ainda sem endpoint: último acesso e horário de pico ficam para quando o front usar.
 
 ## 4. Schema proposto
 
@@ -103,6 +104,7 @@ Sessões entram em migration própria, separada de `player` e `stat_snapshot`.
 
 - Outras estatísticas (blocos minerados, mobs mortos, distância percorrida): spec própria.
 - Retenção e compactação de snapshots antigos: avaliar quando o volume justificar.
+- Reset de mundo: os contadores voltam a zero e o delta do período é travado em zero, então o progresso pós-reset só aparece quando passar o total antigo. Tratar uma queda nos contadores como nova base quando acontecer o primeiro reset.
 
 ## 8. Referências de código
 
