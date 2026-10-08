@@ -8,21 +8,25 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 
 @ConfigurationProperties("tickboard")
 public record MinecraftProperties(
-        @DefaultValue("../dev-data") Path serverDir,
+        @DefaultValue("../dev-data") String serverDir,
         @DefaultValue("world") String levelName,
         @DefaultValue("localhost") String publicAddress,
         @DefaultValue Rcon rcon) {
 
+    public Path serverPath() {
+        return Path.of(serverDir);
+    }
+
     public Path statsDir() {
-        return serverDir.resolve(levelName).resolve("stats");
+        return serverPath().resolve(levelName).resolve("stats");
     }
 
     public Path userCacheFile() {
-        return serverDir.resolve("usercache.json");
+        return serverPath().resolve("usercache.json");
     }
 
     public Path serverPropertiesFile() {
-        return serverDir.resolve("server.properties");
+        return serverPath().resolve("server.properties");
     }
 
     public record Rcon(
