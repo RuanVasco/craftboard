@@ -28,6 +28,21 @@ class MinecraftPropertiesTest {
         assertThat(properties().statsDir()).isEqualTo(stats);
     }
 
+    @Test
+    void resolvesPlayerDataUnderPlayersOnRecentWorlds() throws IOException {
+        var data = Files.createDirectories(serverDir.resolve("world/players/data"));
+
+        assertThat(properties().playerDataDir()).isEqualTo(data);
+        assertThat(properties().advancementsDir()).isEqualTo(serverDir.resolve("world/players/advancements"));
+    }
+
+    @Test
+    void keepsLegacyPlayerDataFolderWhenPresent() throws IOException {
+        var data = Files.createDirectories(serverDir.resolve("world/playerdata"));
+
+        assertThat(properties().playerDataDir()).isEqualTo(data);
+    }
+
     private MinecraftProperties properties() {
         return new MinecraftProperties(serverDir.toString(), "world", "localhost", null);
     }

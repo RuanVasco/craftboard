@@ -1,0 +1,39 @@
+{
+  "minecraft:recipes/misc/crafting_table": {
+    "criteria": {
+      "has_planks": "2026-10-02 22:48:00 -0300"
+    },
+    "done": true
+  },
+  "minecraft:story/root": {
+    "criteria": {
+      "requirement": "2026-10-03 15:04:28 -0300"
+    },
+    "done": true
+  },
+  "minecraft:nether/distract_piglin": {
+    "criteria": {
+      "requirement": "2026-10-04 08:41:23 -0300"
+    },
+    "done": true
+  },
+  "minecraft:adventure/trade": {
+    "criteria": {
+      "requirement": "2026-10-05 05:15:34 -0300"
+    },
+    "done": true
+  },
+  "minecraft:husbandry/root": {
+    "criteria": {
+      "requirement": "2026-10-06 08:03:50 -0300"
+    },
+    "done": true
+  },
+  "minecraft:adventure/adventuring_time": {
+    "criteria": {
+      "minecraft:plains": "2026-10-06 08:03:50 -0300"
+    },
+    "done": false
+  },
+  "DataVersion": 4600
+}

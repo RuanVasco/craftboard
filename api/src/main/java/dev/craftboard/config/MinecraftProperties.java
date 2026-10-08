@@ -18,11 +18,34 @@ public record MinecraftProperties(
         return Path.of(serverDir);
     }
 
-    // Recent versions moved stats under players/, older worlds still use the legacy folder.
+    public Path worldPath() {
+        return serverPath().resolve(levelName);
+    }
+
     public Path statsDir() {
-        var world = serverPath().resolve(levelName);
-        var legacy = world.resolve("stats");
-        return Files.isDirectory(legacy) ? legacy : world.resolve("players").resolve("stats");
+        return playerFolder("stats", "stats");
+    }
+
+    public Path advancementsDir() {
+        return playerFolder("advancements", "advancements");
+    }
+
+    public Path playerDataDir() {
+        return playerFolder("playerdata", "data");
+    }
+
+    public Path levelDatFile() {
+        return worldPath().resolve("level.dat");
+    }
+
+    public Path latestLogFile() {
+        return serverPath().resolve("logs").resolve("latest.log");
+    }
+
+    // Recent versions moved per player files under players/, older worlds still use the legacy folders.
+    private Path playerFolder(String legacy, String modern) {
+        var legacyDir = worldPath().resolve(legacy);
+        return Files.isDirectory(legacyDir) ? legacyDir : worldPath().resolve("players").resolve(modern);
     }
 
     public Path userCacheFile() {
