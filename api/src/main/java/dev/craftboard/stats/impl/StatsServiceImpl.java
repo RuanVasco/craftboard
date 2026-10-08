@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import dev.craftboard.config.MinecraftProperties;
 import dev.craftboard.player.PlayerDirectory;
 import dev.craftboard.stats.PlayerStats;
+import dev.craftboard.stats.RawStats;
 import dev.craftboard.stats.StatsFileParser;
 import dev.craftboard.stats.StatsFiles;
 import dev.craftboard.stats.StatsService;
@@ -39,12 +40,18 @@ public class StatsServiceImpl implements StatsService {
     private final ApplicationEventPublisher events;
 
     private final Map<UUID, PlayerStats> cache = new ConcurrentHashMap<>();
+    private final Map<UUID, RawStats> rawCache = new ConcurrentHashMap<>();
 
     @Override
     public List<PlayerStats> all() {
         return cache.values().stream()
                 .sorted(Comparator.comparingLong(PlayerStats::playTimeTicks).reversed())
                 .toList();
+    }
+
+    @Override
+    public Map<UUID, RawStats> raw() {
+        return Map.copyOf(rawCache);
     }
 
     @PostConstruct
@@ -72,14 +79,15 @@ public class StatsServiceImpl implements StatsService {
         }
         try {
             var raw = readWithRetry(file);
-            var stats = new PlayerStats(
+            var stats = PlayerStats.of(
                     uuid,
                     playerDirectory.nameOf(uuid).orElse(uuid.toString()),
-                    raw.deaths(),
-                    raw.playTimeTicks(),
+                    raw,
                     Files.getLastModifiedTime(file).toInstant());
+            var previousRaw = rawCache.put(uuid, raw);
             var previous = cache.put(uuid, stats);
-            if (previous == null || !sameValues(previous, stats)) {
+            // Any stat counts as a change, so open profiles refresh even when the summary did not move.
+            if (previous == null || !raw.equals(previousRaw) || !previous.name().equals(stats.name())) {
                 events.publishEvent(new StatsUpdatedEvent(stats));
             }
         } catch (IOException | JacksonException e) {
@@ -88,7 +96,7 @@ public class StatsServiceImpl implements StatsService {
     }
 
     // The server may still be writing the file when the watcher fires.
-    private StatsFileParser.RawStats readWithRetry(Path file) throws IOException {
+    private RawStats readWithRetry(Path file) throws IOException {
         try {
             return parser.parse(Files.readAllBytes(file));
         } catch (JacksonException e) {
@@ -100,9 +108,5 @@ public class StatsServiceImpl implements StatsService {
             }
             return parser.parse(Files.readAllBytes(file));
         }
-    }
-
-    private static boolean sameValues(PlayerStats a, PlayerStats b) {
-        return a.deaths() == b.deaths() && a.playTimeTicks() == b.playTimeTicks() && a.name().equals(b.name());
     }
 }

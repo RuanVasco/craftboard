@@ -58,7 +58,7 @@ public class HistoryServiceImpl implements HistoryService {
         return statsService.all().stream()
                 .filter(current -> baselines.containsKey(current.uuid()))
                 .map(current -> gainedSince(current, baselines.get(current.uuid())))
-                .filter(gained -> gained.deaths() > 0 || gained.playTimeTicks() > 0)
+                .filter(HistoryServiceImpl::gainedAnything)
                 .sorted(Comparator.comparingLong(PlayerStats::playTimeTicks).reversed())
                 .toList();
     }
@@ -77,7 +77,7 @@ public class HistoryServiceImpl implements HistoryService {
                 : snapshots.findDownsampled(uuid, start, end, start.getEpochSecond(),
                         Math.max(1, Duration.between(start, end).toSeconds() / (double) MAX_HISTORY_POINTS));
         return rows.stream()
-                .map(s -> new SnapshotPoint(s.getCapturedAt(), s.getDeaths(), s.getPlayTimeTicks()))
+                .map(SnapshotPoint::of)
                 .toList();
     }
 
@@ -115,26 +115,46 @@ public class HistoryServiceImpl implements HistoryService {
 
         var latest = snapshots.findFirstByPlayerUuidOrderByCapturedAtDescIdDesc(stats.uuid());
         if (latest.isEmpty() && !initial) {
-            latest = Optional.of(snapshots.save(new StatSnapshot(stats.uuid(), 0, 0, now)));
+            latest = Optional.of(snapshots.save(StatSnapshot.zero(stats.uuid(), now)));
         }
         if (latest.isPresent() && sameValues(latest.get(), stats)) {
             return;
         }
-        snapshots.save(new StatSnapshot(stats.uuid(), stats.deaths(), stats.playTimeTicks(), now));
+        snapshots.save(new StatSnapshot(stats, now));
         player.setLastSeen(now);
     }
 
     private static PlayerStats gainedSince(PlayerStats current, StatSnapshot baseline) {
-        // Counters go back after a world reset, which should read as zero, not negative.
         return new PlayerStats(
                 current.uuid(),
                 current.name(),
-                Math.max(0, current.deaths() - baseline.getDeaths()),
-                Math.max(0, current.playTimeTicks() - baseline.getPlayTimeTicks()),
+                gained(current.deaths(), baseline.getDeaths()),
+                gained(current.playTimeTicks(), baseline.getPlayTimeTicks()),
+                gained(current.mobKills(), baseline.getMobKills()),
+                gained(current.playerKills(), baseline.getPlayerKills()),
+                gained(current.distanceCm(), baseline.getDistanceCm()),
+                gained(current.blocksMined(), baseline.getBlocksMined()),
                 current.updatedAt());
     }
 
+    // A baseline captured before a counter was tracked says nothing about the period, so it counts
+    // as zero gained instead of the whole total. Counters also go back after a world reset, which
+    // should read as zero, not negative.
+    private static long gained(long current, Long baseline) {
+        return baseline == null ? 0 : Math.max(0, current - baseline);
+    }
+
+    private static boolean gainedAnything(PlayerStats gained) {
+        return gained.deaths() > 0 || gained.playTimeTicks() > 0 || gained.mobKills() > 0
+                || gained.playerKills() > 0 || gained.distanceCm() > 0 || gained.blocksMined() > 0;
+    }
+
     private static boolean sameValues(StatSnapshot snapshot, PlayerStats stats) {
-        return snapshot.getDeaths() == stats.deaths() && snapshot.getPlayTimeTicks() == stats.playTimeTicks();
+        return snapshot.getDeaths() == stats.deaths()
+                && snapshot.getPlayTimeTicks() == stats.playTimeTicks()
+                && Long.valueOf(stats.mobKills()).equals(snapshot.getMobKills())
+                && Long.valueOf(stats.playerKills()).equals(snapshot.getPlayerKills())
+                && Long.valueOf(stats.distanceCm()).equals(snapshot.getDistanceCm())
+                && Long.valueOf(stats.blocksMined()).equals(snapshot.getBlocksMined());
     }
 }

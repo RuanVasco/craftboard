@@ -50,7 +50,7 @@ class HistoryServiceImplTest extends IntegrationTest {
     @Test
     void newPlayerAfterBackfillStartsFromZero() {
         historyService.backfill();
-        var newcomer = new PlayerStats(UUID.randomUUID(), "Newcomer", 1, 500, Instant.now());
+        var newcomer = new PlayerStats(UUID.randomUUID(), "Newcomer", 1, 500, 0, 0, 0, 0, Instant.now());
 
         historyService.onStatsUpdated(new StatsUpdatedEvent(newcomer));
 
@@ -63,7 +63,7 @@ class HistoryServiceImplTest extends IntegrationTest {
     void newPlayerSeenByRconFirstStillStartsFromZero() {
         historyService.backfill();
         sessionService.reconcile(List.of("Newcomer"));
-        var newcomer = new PlayerStats(OfflineUuid.of("Newcomer"), "Newcomer", 0, 500, Instant.now());
+        var newcomer = new PlayerStats(OfflineUuid.of("Newcomer"), "Newcomer", 0, 500, 0, 0, 0, 0, Instant.now());
 
         historyService.onStatsUpdated(new StatsUpdatedEvent(newcomer));
 
