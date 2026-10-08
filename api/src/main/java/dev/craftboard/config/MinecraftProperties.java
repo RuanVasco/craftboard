@@ -1,5 +1,6 @@
 package dev.craftboard.config;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 
@@ -17,8 +18,11 @@ public record MinecraftProperties(
         return Path.of(serverDir);
     }
 
+    // Recent versions moved stats under players/, older worlds still use the legacy folder.
     public Path statsDir() {
-        return serverPath().resolve(levelName).resolve("stats");
+        var world = serverPath().resolve(levelName);
+        var legacy = world.resolve("stats");
+        return Files.isDirectory(legacy) ? legacy : world.resolve("players").resolve("stats");
     }
 
     public Path userCacheFile() {
