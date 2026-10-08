@@ -10,16 +10,17 @@ interface Props {
   title: string;
   points: ChartPoint[];
   formatValue: (value: number) => string;
+  integer?: boolean;
 }
 
 // Single series on a 0-based axis. The SVG stretches to the box and labels live in HTML, so
 // text never gets distorted by the non-uniform scale.
-export function LineChart({ title, points, formatValue }: Props) {
+export function LineChart({ title, points, formatValue, integer = false }: Props) {
   const [hovered, setHovered] = useState<number | null>(null);
 
   const start = points[0].time;
   const span = Math.max(1, points[points.length - 1].time - start);
-  const top = niceMax(Math.max(...points.map((p) => p.value)));
+  const top = niceMax(Math.max(...points.map((p) => p.value)), integer);
   const x = (p: ChartPoint) => ((p.time - start) / span) * 100;
   const y = (p: ChartPoint) => 100 - (p.value / top) * 100;
   const path = points.map((p, i) => `${i === 0 ? 'M' : 'L'}${x(p)},${y(p)}`).join(' ');
@@ -91,7 +92,9 @@ export function LineChart({ title, points, formatValue }: Props) {
   );
 }
 
-function niceMax(value: number): number {
+function niceMax(value: number, integer: boolean): number {
+  // Counts need a top of at least 2, or the middle label lands on a fraction.
+  if (integer && value <= 2) return 2;
   if (value <= 0) return 1;
   const magnitude = 10 ** Math.floor(Math.log10(value));
   // Steps whose half is still a round number, since the middle gridline is labeled too.

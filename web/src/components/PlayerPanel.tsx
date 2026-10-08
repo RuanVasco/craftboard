@@ -75,6 +75,7 @@ function PanelBody({ history, error }: { history: SnapshotPoint[] | null; error:
         title="Mortes"
         points={series((s) => s.deaths)}
         formatValue={(deaths) => numberFormat.format(Math.round(deaths))}
+        integer
       />
       <details className="text-sm">
         <summary className="cursor-pointer text-ink-muted hover:text-ink">Ver dados</summary>
