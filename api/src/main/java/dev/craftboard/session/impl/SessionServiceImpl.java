@@ -9,6 +9,7 @@ import java.util.UUID;
 import org.springframework.context.event.EventListener;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import dev.craftboard.player.OfflineUuid;
@@ -34,7 +35,7 @@ public class SessionServiceImpl implements SessionService {
     public void onOnlinePlayersChanged(OnlinePlayersChangedEvent event) {
         try {
             reconcile(event.onlinePlayers());
-        } catch (DataAccessException e) {
+        } catch (DataAccessException | TransactionException e) {
             log.warn("Could not record sessions: {}", e.getMessage());
         }
     }

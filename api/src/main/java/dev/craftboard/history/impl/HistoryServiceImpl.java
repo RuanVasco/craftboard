@@ -11,6 +11,7 @@ import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.event.EventListener;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import dev.craftboard.history.HistoryService;
@@ -87,7 +88,7 @@ public class HistoryServiceImpl implements HistoryService {
     private void record(PlayerStats stats, boolean initial) {
         try {
             transaction.executeWithoutResult(status -> save(stats, initial));
-        } catch (DataAccessException e) {
+        } catch (DataAccessException | TransactionException e) {
             log.warn("Could not record snapshot for {}: {}", stats.uuid(), e.getMessage());
         }
     }
