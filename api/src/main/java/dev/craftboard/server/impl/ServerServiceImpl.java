@@ -19,6 +19,7 @@ import dev.craftboard.server.OnlinePlayersPolledEvent;
 import dev.craftboard.server.ServerInfo;
 import dev.craftboard.server.ServerService;
 import dev.craftboard.stream.StreamService;
+import dev.craftboard.world.WorldService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,6 +34,7 @@ public class ServerServiceImpl implements ServerService {
     private final RconClient rcon;
     private final StreamService streamService;
     private final ApplicationEventPublisher events;
+    private final WorldService worldService;
 
     private volatile Boolean online;
     private volatile List<String> onlinePlayers;
@@ -44,9 +46,19 @@ public class ServerServiceImpl implements ServerService {
                 properties.publicAddress(),
                 serverProperties.getProperty("motd", "A Minecraft Server"),
                 parseInt(serverProperties.getProperty("max-players"), DEFAULT_MAX_PLAYERS),
+                serverProperties.getProperty("difficulty", "easy"),
+                serverProperties.getProperty("gamemode", "survival"),
+                Boolean.parseBoolean(serverProperties.getProperty("hardcore", "false")),
+                Boolean.parseBoolean(serverProperties.getProperty("pvp", "true")),
                 properties.rcon().enabled(),
                 online,
-                onlinePlayers);
+                onlinePlayers,
+                worldService.info().orElse(null));
+    }
+
+    @Override
+    public void broadcastInfo() {
+        streamService.broadcast("server", info());
     }
 
     @Scheduled(fixedDelayString = "${craftboard.rcon.poll-interval:10s}")
@@ -67,7 +79,7 @@ public class ServerServiceImpl implements ServerService {
         if (!Objects.equals(nowOnline, online) || !Objects.equals(nowPlayers, onlinePlayers)) {
             online = nowOnline;
             onlinePlayers = nowPlayers;
-            streamService.broadcast("server", info());
+            broadcastInfo();
         }
         events.publishEvent(new OnlinePlayersPolledEvent(nowPlayers));
     }

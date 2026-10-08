@@ -20,6 +20,7 @@ import org.springframework.stereotype.Component;
 
 import dev.craftboard.config.MinecraftProperties;
 import dev.craftboard.player.PlayerDirectory;
+import dev.craftboard.server.ServerService;
 import dev.craftboard.stats.StatsFiles;
 import dev.craftboard.stats.StatsService;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,7 @@ public class ServerFilesWatcher implements SmartLifecycle {
     private final MinecraftProperties properties;
     private final StatsService statsService;
     private final PlayerDirectory playerDirectory;
+    private final ServerService serverService;
 
     private WatchService watchService;
     private Thread thread;
@@ -47,6 +49,7 @@ public class ServerFilesWatcher implements SmartLifecycle {
             watchService = FileSystems.getDefault().newWatchService();
             register(properties.statsDir());
             register(properties.serverPath());
+            register(properties.worldPath());
         } catch (IOException e) {
             log.error("Could not start file watcher", e);
             return;
@@ -84,13 +87,15 @@ public class ServerFilesWatcher implements SmartLifecycle {
     private void loop() {
         Set<UUID> changedStats = new HashSet<>();
         boolean userCacheChanged = false;
+        boolean levelChanged = false;
         while (running) {
             try {
                 WatchKey key = watchService.poll(DEBOUNCE_MS, TimeUnit.MILLISECONDS);
                 if (key == null) {
-                    flush(changedStats, userCacheChanged);
+                    flush(changedStats, userCacheChanged, levelChanged);
                     changedStats.clear();
                     userCacheChanged = false;
+                    levelChanged = false;
                     continue;
                 }
                 var dir = (Path) key.watchable();
@@ -100,6 +105,8 @@ public class ServerFilesWatcher implements SmartLifecycle {
                     }
                     if (dir.equals(properties.statsDir())) {
                         StatsFiles.uuidOf(file).ifPresent(changedStats::add);
+                    } else if (dir.equals(properties.worldPath())) {
+                        levelChanged |= file.equals(properties.levelDatFile().getFileName());
                     } else if (file.equals(properties.userCacheFile().getFileName())) {
                         userCacheChanged = true;
                     }
@@ -116,7 +123,10 @@ public class ServerFilesWatcher implements SmartLifecycle {
         }
     }
 
-    private void flush(Set<UUID> changedStats, boolean userCacheChanged) {
+    private void flush(Set<UUID> changedStats, boolean userCacheChanged, boolean levelChanged) {
+        if (levelChanged) {
+            serverService.broadcastInfo();
+        }
         if (userCacheChanged) {
             playerDirectory.reload();
             statsService.reloadAll();
