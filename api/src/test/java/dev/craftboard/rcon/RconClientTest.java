@@ -10,6 +10,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.ZoneId;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
@@ -44,7 +45,7 @@ class RconClientTest {
     private MinecraftProperties properties(String password) {
         var rcon = new MinecraftProperties.Rcon(true, "127.0.0.1", server.getLocalPort(), password,
                 Duration.ofSeconds(10), Duration.ofSeconds(60));
-        return new MinecraftProperties("../dev-data", "world", "localhost", rcon);
+        return new MinecraftProperties("../dev-data", "world", "localhost", ZoneId.of("UTC"), rcon);
     }
 
     private void startFakeServer(String password) throws IOException {

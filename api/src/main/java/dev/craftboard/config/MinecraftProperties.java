@@ -3,6 +3,7 @@ package dev.craftboard.config;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.ZoneId;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
@@ -12,6 +13,8 @@ public record MinecraftProperties(
         @DefaultValue("../dev-data") String serverDir,
         @DefaultValue("world") String levelName,
         @DefaultValue("localhost") String publicAddress,
+        // Zone the Minecraft server logs in, and the one activity is bucketed by.
+        @DefaultValue("America/Sao_Paulo") ZoneId timezone,
         @DefaultValue Rcon rcon) {
 
     public Path serverPath() {

@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.ZoneId;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -44,6 +45,6 @@ class MinecraftPropertiesTest {
     }
 
     private MinecraftProperties properties() {
-        return new MinecraftProperties(serverDir.toString(), "world", "localhost", null);
+        return new MinecraftProperties(serverDir.toString(), "world", "localhost", ZoneId.of("UTC"), null);
     }
 }
