@@ -1,5 +1,6 @@
 package dev.craftboard.history.impl;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -32,6 +33,9 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class HistoryServiceImpl implements HistoryService {
 
+    // Enough for a chart a few hundred pixels wide. A regular player passes it in days.
+    private static final int MAX_HISTORY_POINTS = 500;
+
     private final StatsService statsService;
     private final PlayerRepository players;
     private final StatSnapshotRepository snapshots;
@@ -61,9 +65,18 @@ public class HistoryServiceImpl implements HistoryService {
 
     @Override
     public List<SnapshotPoint> history(UUID uuid, Instant from, Instant to) {
-        return snapshots.findByPlayerUuidAndCapturedAtBetweenOrderByCapturedAtAscIdAsc(
-                        uuid, from == null ? Instant.EPOCH : from, to == null ? Instant.now() : to)
-                .stream()
+        var start = from != null ? from : snapshots.findFirstByPlayerUuidOrderByCapturedAtAscIdAsc(uuid)
+                .map(StatSnapshot::getCapturedAt)
+                .orElse(null);
+        if (start == null) {
+            return List.of();
+        }
+        var end = to != null ? to : Instant.now();
+        var rows = snapshots.countByPlayerUuidAndCapturedAtBetween(uuid, start, end) <= MAX_HISTORY_POINTS
+                ? snapshots.findByPlayerUuidAndCapturedAtBetweenOrderByCapturedAtAscIdAsc(uuid, start, end)
+                : snapshots.findDownsampled(uuid, start, end, start.getEpochSecond(),
+                        Math.max(1, Duration.between(start, end).toSeconds() / (double) MAX_HISTORY_POINTS));
+        return rows.stream()
                 .map(s -> new SnapshotPoint(s.getCapturedAt(), s.getDeaths(), s.getPlayTimeTicks()))
                 .toList();
     }

@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -111,6 +112,21 @@ class HistoryServiceImplTest extends IntegrationTest {
             assertThat(gained.deaths()).isEqualTo(3);
             assertThat(gained.playTimeTicks()).isEqualTo(2000);
         });
+    }
+
+    @Test
+    void longHistoryIsDownsampledKeepingTheLatestValue() {
+        var start = Instant.now().minus(Duration.ofDays(30));
+        players.save(new Player(STEVE, "Steve", start));
+        for (int i = 0; i < 2000; i++) {
+            snapshots.save(new StatSnapshot(STEVE, i, i * 100L, start.plus(Duration.ofMinutes(i * 20L))));
+        }
+
+        var history = historyService.history(STEVE, null, null);
+
+        assertThat(history).hasSizeLessThanOrEqualTo(500).hasSizeGreaterThan(400);
+        assertThat(history).isSortedAccordingTo(Comparator.comparing(p -> p.capturedAt()));
+        assertThat(history.getLast().deaths()).isEqualTo(1999);
     }
 
     @Test
