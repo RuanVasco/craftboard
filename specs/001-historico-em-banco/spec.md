@@ -1,6 +1,6 @@
 # Spec 001: Histórico de estatísticas em banco
 
-Status: **Draft** (só especificação, sem implementação)
+Status: **Implementado**
 
 ## 1. Problema
 
@@ -49,6 +49,15 @@ A cada `StatsUpdatedEvent` (já disparado só quando o valor muda). Como o servi
 ### 3.5 Backfill no startup
 
 No primeiro startup com banco vazio, gravar um snapshot inicial de cada jogador com os valores atuais, para que os deltas de período tenham ponto de partida.
+
+### 3.6 Ajustes feitos na implementação
+
+- `player.name` é `VARCHAR(36)`, não 16: quando o `usercache.json` não conhece o jogador, o nome é o próprio UUID.
+- Semana e mês são janelas móveis de 7 e 30 dias, sem depender de fuso.
+- Jogador visto pela primeira vez depois do backfill inicial ganha um snapshot zerado antes do atual, então o total dele conta inteiro no período. Sem snapshot antes de `from`, a base é o primeiro snapshot do jogador.
+- Ranking por período omite quem não ganhou nada no período.
+- `captured_at` é a hora em que o craftboard gravou, não o mtime do arquivo.
+- Sessões são reconciliadas com a lista completa do `list` a cada mudança (abre para quem entrou, fecha para quem saiu, fecha todas se o servidor cair). Ainda sem endpoint: último acesso e horário de pico ficam para quando o front usar.
 
 ## 4. Schema proposto
 
