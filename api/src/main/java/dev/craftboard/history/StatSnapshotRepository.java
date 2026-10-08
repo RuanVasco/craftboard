@@ -15,14 +15,18 @@ public interface StatSnapshotRepository extends JpaRepository<StatSnapshot, Long
     List<StatSnapshot> findByPlayerUuidAndCapturedAtBetweenOrderByCapturedAtAscIdAsc(
             UUID playerUuid, Instant from, Instant to);
 
+    // One index lookup per player instead of scanning a table that only grows.
     @Query(value = """
-            SELECT DISTINCT ON (player_uuid) * FROM stat_snapshot
-            WHERE captured_at <= :at
-            ORDER BY player_uuid, captured_at DESC, id DESC""", nativeQuery = true)
+            SELECT s.* FROM player p CROSS JOIN LATERAL (
+                SELECT * FROM stat_snapshot
+                WHERE player_uuid = p.uuid AND captured_at <= :at
+                ORDER BY captured_at DESC, id DESC LIMIT 1) s""", nativeQuery = true)
     List<StatSnapshot> findLatestPerPlayerAtOrBefore(Instant at);
 
     @Query(value = """
-            SELECT DISTINCT ON (player_uuid) * FROM stat_snapshot
-            ORDER BY player_uuid, captured_at, id""", nativeQuery = true)
-    List<StatSnapshot> findEarliestPerPlayer();
+            SELECT s.* FROM player p CROSS JOIN LATERAL (
+                SELECT * FROM stat_snapshot
+                WHERE player_uuid = p.uuid AND captured_at > :at
+                ORDER BY captured_at, id LIMIT 1) s""", nativeQuery = true)
+    List<StatSnapshot> findFirstPerPlayerAfter(Instant at);
 }

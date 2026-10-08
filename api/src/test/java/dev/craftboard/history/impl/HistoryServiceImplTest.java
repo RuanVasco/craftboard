@@ -100,6 +100,20 @@ class HistoryServiceImplTest extends IntegrationTest {
     }
 
     @Test
+    void periodRankingFallsBackToTheFirstSnapshotInsideThePeriod() {
+        var steve = steve();
+        var twoDaysAgo = Instant.now().minus(Duration.ofDays(2));
+        players.save(new Player(STEVE, "Steve", twoDaysAgo));
+        snapshots.save(new StatSnapshot(STEVE, steve.deaths() - 3, steve.playTimeTicks() - 2000, twoDaysAgo));
+        snapshots.save(new StatSnapshot(STEVE, steve.deaths() - 1, steve.playTimeTicks() - 500, twoDaysAgo.plusSeconds(60)));
+
+        assertThat(historyService.ranking(Period.WEEK)).singleElement().satisfies(gained -> {
+            assertThat(gained.deaths()).isEqualTo(3);
+            assertThat(gained.playTimeTicks()).isEqualTo(2000);
+        });
+    }
+
+    @Test
     void playersEndpointAcceptsLowercasePeriod() throws Exception {
         mvc.perform(get("/api/players").param("period", "week")).andExpect(status().isOk());
         mvc.perform(get("/api/players").param("period", "year")).andExpect(status().isBadRequest());

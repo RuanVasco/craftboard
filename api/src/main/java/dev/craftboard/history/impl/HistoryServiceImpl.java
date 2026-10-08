@@ -48,7 +48,7 @@ public class HistoryServiceImpl implements HistoryService {
         var from = Instant.now().minus(period.length());
         // Players tracked only after `from` fall back to their first snapshot.
         Map<UUID, StatSnapshot> baselines = new HashMap<>();
-        snapshots.findEarliestPerPlayer().forEach(s -> baselines.put(s.getPlayerUuid(), s));
+        snapshots.findFirstPerPlayerAfter(from).forEach(s -> baselines.put(s.getPlayerUuid(), s));
         snapshots.findLatestPerPlayerAtOrBefore(from).forEach(s -> baselines.put(s.getPlayerUuid(), s));
 
         return statsService.all().stream()
