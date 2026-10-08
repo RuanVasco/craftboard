@@ -1,6 +1,6 @@
 services:
   craftboard:
-    build: .
+    image: ghcr.io/ruanvasco/craftboard:latest
     container_name: craftboard
     restart: unless-stopped
     ports:
