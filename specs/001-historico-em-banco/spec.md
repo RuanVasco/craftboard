@@ -39,9 +39,11 @@ Com o Postgres, o dev passa a precisar de Docker para o banco. O compose ganha p
 
 Formato decidido: **`profiles:` num único `docker-compose.yml`**.
 
-- `postgres` participa dos dois perfis (`profiles: [dev, prod]`); `craftboard` e `watchtower` só de `prod`.
-- Dev: `docker compose --profile dev up -d`. Prod: `docker compose --profile prod up -d` (ou `COMPOSE_PROFILES=prod` no `.env` da VM, para o comando ficar sem flag).
-- O que muda entre perfis no `postgres` (porta exposta só em dev) fica num serviço separado, `postgres-dev`, em vez de condicionar a porta, já que o compose não varia atributos por perfil.
+- `postgres-dev` (perfil `dev`): porta `5432` exposta no host, volume próprio de dev.
+- `postgres` (perfil `prod`): sem porta exposta, só acessível pela rede do compose.
+- `craftboard` e `watchtower`: perfil `prod`.
+- São dois serviços de banco porque o compose não varia atributos (como `ports`) por perfil.
+- Dev: `docker compose --profile dev up -d`. Prod: `COMPOSE_PROFILES=prod` no `.env` da VM, para `docker compose up -d` continuar sem flag.
 
 ### 3.4 Quando gravar snapshot
 
