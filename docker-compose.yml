@@ -15,3 +15,16 @@ services:
       CRAFTBOARD_RCON_PASSWORD: ${CRAFTBOARD_RCON_PASSWORD:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+  # Scoped to craftboard only, so it never touches other stacks on the same host.
+  watchtower:
+    image: ghcr.io/nicholas-fedor/watchtower:latest
+    container_name: craftboard-watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ~/.docker/config.json:/config.json:ro
+    environment:
+      - WATCHTOWER_POLL_INTERVAL=300
+      - WATCHTOWER_CLEANUP=true
+    command: craftboard
