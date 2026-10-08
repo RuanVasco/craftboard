@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: tickboard
+  threads:
+    virtual:
+      enabled: true
+
+tickboard:
+  server-dir: ${TICKBOARD_SERVER_DIR:../dev-data}
+  level-name: ${TICKBOARD_LEVEL_NAME:world}
+  public-address: ${TICKBOARD_PUBLIC_ADDRESS:localhost}
+  rcon:
+    enabled: ${TICKBOARD_RCON_ENABLED:false}
+    host: ${TICKBOARD_RCON_HOST:localhost}
+    port: ${TICKBOARD_RCON_PORT:25575}
+    password: ${TICKBOARD_RCON_PASSWORD:}
+    poll-interval: ${TICKBOARD_RCON_POLL_INTERVAL:10s}
+    save-interval: ${TICKBOARD_RCON_SAVE_INTERVAL:60s}
