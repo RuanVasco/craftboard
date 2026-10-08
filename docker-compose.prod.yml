@@ -3,8 +3,9 @@ services:
     image: ghcr.io/ruanvasco/craftboard:latest
     container_name: craftboard
     restart: unless-stopped
+    # Loopback only: public traffic arrives through the cloudflared tunnel.
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     volumes:
       # Server folder (the one with server.properties). Read only, craftboard never writes there.
       - ${MINECRAFT_DIR}:/minecraft:ro
@@ -21,6 +22,18 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+
+  # Outbound tunnel to Cloudflare, so no inbound port is needed for the dashboard.
+  # Point the tunnel public hostname to http://craftboard:8080 in the Zero Trust panel.
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: craftboard-cloudflared
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?set CLOUDFLARE_TUNNEL_TOKEN in .env}
+    depends_on:
+      - craftboard
 
   # Pinned and left out of watchtower on purpose: database upgrades are manual, after a backup.
   postgres:
