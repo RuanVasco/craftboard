@@ -14,7 +14,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import dev.craftboard.player.OfflineUuid;
 import dev.craftboard.player.PlayerRepository;
-import dev.craftboard.server.OnlinePlayersChangedEvent;
+import dev.craftboard.server.OnlinePlayersPolledEvent;
 import dev.craftboard.session.PlayerSession;
 import dev.craftboard.session.PlayerSessionRepository;
 import dev.craftboard.session.SessionService;
@@ -31,7 +31,7 @@ public class SessionServiceImpl implements SessionService {
     private final TransactionTemplate transaction;
 
     @EventListener
-    public void onOnlinePlayersChanged(OnlinePlayersChangedEvent event) {
+    public void onOnlinePlayersPolled(OnlinePlayersPolledEvent event) {
         try {
             reconcile(event.onlinePlayers());
         } catch (DataAccessException | TransactionException e) {

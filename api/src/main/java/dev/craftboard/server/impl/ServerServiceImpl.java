@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 
 import dev.craftboard.config.MinecraftProperties;
 import dev.craftboard.rcon.RconClient;
-import dev.craftboard.server.OnlinePlayersChangedEvent;
+import dev.craftboard.server.OnlinePlayersPolledEvent;
 import dev.craftboard.server.ServerInfo;
 import dev.craftboard.server.ServerService;
 import dev.craftboard.stream.StreamService;
@@ -68,8 +68,8 @@ public class ServerServiceImpl implements ServerService {
             online = nowOnline;
             onlinePlayers = nowPlayers;
             streamService.broadcast("server", info());
-            events.publishEvent(new OnlinePlayersChangedEvent(nowPlayers));
         }
+        events.publishEvent(new OnlinePlayersPolledEvent(nowPlayers));
     }
 
     // Stats files only hit the disk on save, so forcing one is what makes the dashboard feel live.
