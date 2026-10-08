@@ -9,11 +9,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
 
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import dev.craftboard.config.MinecraftProperties;
 import dev.craftboard.rcon.RconClient;
+import dev.craftboard.server.OnlinePlayersChangedEvent;
 import dev.craftboard.server.ServerInfo;
 import dev.craftboard.server.ServerService;
 import dev.craftboard.stream.StreamService;
@@ -30,6 +32,7 @@ public class ServerServiceImpl implements ServerService {
     private final MinecraftProperties properties;
     private final RconClient rcon;
     private final StreamService streamService;
+    private final ApplicationEventPublisher events;
 
     private volatile Boolean online;
     private volatile List<String> onlinePlayers;
@@ -65,6 +68,7 @@ public class ServerServiceImpl implements ServerService {
             online = nowOnline;
             onlinePlayers = nowPlayers;
             streamService.broadcast("server", info());
+            events.publishEvent(new OnlinePlayersChangedEvent(nowPlayers));
         }
     }
 
