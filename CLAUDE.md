@@ -1,7 +1,9 @@
 # craftboard
 
 Public dashboard for a vanilla Minecraft server (offline mode). Reads the server's own
-files (`usercache.json`, `world/stats/*.json`) and optionally talks to it over RCON.
+files (`usercache.json`, stats, advancements and player data per player, `level.dat`,
+`logs/latest.log`) and optionally talks to it over RCON. Player coordinates and chat are
+never exposed, the dashboard is public.
 
 - `api/`: Spring Boot 4, Java 25. Reads the server files, exposes REST + SSE.
 - `web/`: React + Vite + TypeScript + Tailwind. Consumes the API.
