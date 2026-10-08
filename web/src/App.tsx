@@ -1,7 +1,8 @@
 import { CircleAlert } from 'lucide-react';
 import { useState } from 'react';
-import type { Period } from './api';
+import type { Period, PlayerStats } from './api';
 import { PeriodFilter } from './components/PeriodFilter';
+import { PlayerPanel } from './components/PlayerPanel';
 import { PlayerRanking } from './components/PlayerRanking';
 import { ServerBanner } from './components/ServerBanner';
 import { StatTiles } from './components/StatTiles';
@@ -9,6 +10,7 @@ import { useLiveData } from './useLiveData';
 
 export default function App() {
   const [period, setPeriod] = useState<Period>('all');
+  const [selected, setSelected] = useState<PlayerStats | null>(null);
   const { players, server, error, live } = useLiveData(period);
 
   return (
@@ -27,8 +29,10 @@ export default function App() {
           players={players}
           onlinePlayers={server?.onlinePlayers ?? null}
           emptyMessage={period === 'all' ? 'Nenhum jogador ainda.' : 'Ninguém jogou neste período.'}
+          onSelect={setSelected}
         />
       </main>
+      {selected && <PlayerPanel player={selected} onClose={() => setSelected(null)} />}
     </div>
   );
 }

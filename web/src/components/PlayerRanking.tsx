@@ -9,9 +9,10 @@ interface Props {
   players: PlayerStats[];
   onlinePlayers: string[] | null;
   emptyMessage: string;
+  onSelect: (player: PlayerStats) => void;
 }
 
-export function PlayerRanking({ players, onlinePlayers, emptyMessage }: Props) {
+export function PlayerRanking({ players, onlinePlayers, emptyMessage, onSelect }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>('playTimeTicks');
 
   const sorted = useMemo(
@@ -38,7 +39,7 @@ export function PlayerRanking({ players, onlinePlayers, emptyMessage }: Props) {
             <tr key={player.uuid} className="border-b border-line last:border-0">
               <td className="px-3 py-3 tabular-nums text-ink-muted sm:px-4">{index + 1}</td>
               <td className="px-2 py-3">
-                <PlayerName name={player.name} online={online.has(player.name)} />
+                <PlayerName name={player.name} online={online.has(player.name)} onClick={() => onSelect(player)} />
               </td>
               <td className="px-3 py-3 sm:px-4">
                 <BarCell value={formatPlayTime(player.playTimeTicks)} ratio={player.playTimeTicks / maxPlayTime} />
@@ -76,10 +77,15 @@ function SortHeader({ label, active, onClick }: { label: string; active: boolean
   );
 }
 
-function PlayerName({ name, online }: { name: string; online: boolean }) {
+function PlayerName({ name, online, onClick }: { name: string; online: boolean; onClick: () => void }) {
   const [avatarFailed, setAvatarFailed] = useState(false);
   return (
-    <span className="flex items-center gap-2.5">
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex max-w-full items-center gap-2.5 text-left hover:text-primary"
+      title={`Ver histórico de ${name}`}
+    >
       {avatarFailed ? (
         <User className="size-7 rounded bg-primary-soft p-1 text-ink-muted" aria-hidden />
       ) : (
@@ -96,7 +102,7 @@ function PlayerName({ name, online }: { name: string; online: boolean }) {
       {online && (
         <span className="rounded-full bg-good/15 px-2 py-0.5 text-xs font-medium text-good">online</span>
       )}
-    </span>
+    </button>
   );
 }
 

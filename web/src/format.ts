@@ -11,4 +11,10 @@ export function ticksToHours(ticks: number): number {
   return Math.floor(ticks / TICKS_PER_HOUR);
 }
 
+export function ticksToHoursPrecise(ticks: number): number {
+  return ticks / TICKS_PER_HOUR;
+}
+
 export const numberFormat = new Intl.NumberFormat('pt-BR');
+
+export const dateTimeFormat = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
