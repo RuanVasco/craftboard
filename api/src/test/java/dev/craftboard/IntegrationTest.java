@@ -1,0 +1,22 @@
+package dev.craftboard;
+
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.postgresql.PostgreSQLContainer;
+
+/**
+ * Started once and shared by every test class, so the cached Spring context never points at a
+ * container that a previous class already stopped.
+ */
+@SpringBootTest
+@Testcontainers(disabledWithoutDocker = true)
+public abstract class IntegrationTest {
+
+    @ServiceConnection
+    protected static final PostgreSQLContainer POSTGRES = new PostgreSQLContainer("postgres:18.3-alpine");
+
+    static {
+        POSTGRES.start();
+    }
+}

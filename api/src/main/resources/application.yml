@@ -4,6 +4,15 @@ spring:
   threads:
     virtual:
       enabled: true
+  # Dev defaults match docker-compose.dev.yml. Prod overrides via SPRING_DATASOURCE_* env vars.
+  datasource:
+    url: jdbc:postgresql://localhost:5432/craftboard
+    username: craftboard
+    password: craftboard
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
 
 # craftboard.* keys bind from env vars too (CRAFTBOARD_SERVER_DIR, CRAFTBOARD_RCON_PASSWORD, ...).
 # Defaults live in MinecraftProperties.
