@@ -14,9 +14,13 @@ export function PlayerPanel({ player, onClose }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let active = true;
     fetchHistory(player.uuid)
-      .then(setHistory)
-      .catch((e: Error) => setError(e.message));
+      .then((points) => active && setHistory(points))
+      .catch((e: Error) => active && setError(e.message));
+    return () => {
+      active = false;
+    };
   }, [player.uuid]);
 
   useEffect(() => {

@@ -1,5 +1,5 @@
 import { CircleAlert } from 'lucide-react';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import type { Period, PlayerStats } from './api';
 import { PeriodFilter } from './components/PeriodFilter';
 import { PlayerPanel } from './components/PlayerPanel';
@@ -11,6 +11,7 @@ import { useLiveData } from './useLiveData';
 export default function App() {
   const [period, setPeriod] = useState<Period>('all');
   const [selected, setSelected] = useState<PlayerStats | null>(null);
+  const closePanel = useCallback(() => setSelected(null), []);
   const { players, server, error, live } = useLiveData(period);
 
   return (
@@ -32,7 +33,7 @@ export default function App() {
           onSelect={setSelected}
         />
       </main>
-      {selected && <PlayerPanel player={selected} onClose={() => setSelected(null)} />}
+      {selected && <PlayerPanel player={selected} onClose={closePanel} />}
     </div>
   );
 }
