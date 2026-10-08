@@ -10,7 +10,6 @@ import java.time.Instant;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.MockMvc;
 
 import dev.craftboard.IntegrationTest;
@@ -23,21 +22,18 @@ import dev.craftboard.player.PlayerRepository;
 import dev.craftboard.stats.PlayerStats;
 import dev.craftboard.stats.StatsService;
 import dev.craftboard.stats.StatsUpdatedEvent;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 class HistoryServiceImplTest extends IntegrationTest {
 
     private static final UUID STEVE = OfflineUuid.of("Steve");
 
-    @Autowired
-    private HistoryServiceImpl historyService;
-    @Autowired
-    private StatsService statsService;
-    @Autowired
-    private PlayerRepository players;
-    @Autowired
-    private StatSnapshotRepository snapshots;
-    @Autowired
-    private MockMvc mvc;
+    private final HistoryServiceImpl historyService;
+    private final StatsService statsService;
+    private final PlayerRepository players;
+    private final StatSnapshotRepository snapshots;
+    private final MockMvc mvc;
 
     @Test
     void backfillOnEmptyDatabaseStoresCurrentTotalsOnly() {

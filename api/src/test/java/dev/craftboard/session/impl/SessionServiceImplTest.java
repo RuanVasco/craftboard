@@ -5,22 +5,20 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import dev.craftboard.IntegrationTest;
 import dev.craftboard.player.OfflineUuid;
 import dev.craftboard.player.PlayerRepository;
 import dev.craftboard.session.PlayerSession;
 import dev.craftboard.session.PlayerSessionRepository;
+import lombok.RequiredArgsConstructor;
 
+@RequiredArgsConstructor
 class SessionServiceImplTest extends IntegrationTest {
 
-    @Autowired
-    private SessionServiceImpl sessionService;
-    @Autowired
-    private PlayerSessionRepository sessions;
-    @Autowired
-    private PlayerRepository players;
+    private final SessionServiceImpl sessionService;
+    private final PlayerSessionRepository sessions;
+    private final PlayerRepository players;
 
     @Test
     void opensSessionsForPlayersThatJoined() {
