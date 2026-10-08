@@ -1,4 +1,4 @@
-# tickboard
+# craftboard
 
 Public dashboard for a vanilla Minecraft server (offline mode). Reads the server's own
 files (`usercache.json`, `world/stats/*.json`) and optionally talks to it over RCON.
@@ -27,7 +27,7 @@ files (`usercache.json`, `world/stats/*.json`) and optionally talks to it over R
 - Dependency injection via Lombok `@RequiredArgsConstructor` + `private final` fields. No field `@Autowired`.
 - Services: interface in the feature package, implementation in `impl/` with `Impl` suffix.
 - Controllers are thin: read params, call the service, return the response.
-- Configuration lives in `MinecraftProperties` (`tickboard.*` keys), overridable by env vars.
+- Configuration lives in `MinecraftProperties` (`craftboard.*` keys), overridable by env vars.
 
 ## Minecraft facts
 

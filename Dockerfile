@@ -15,7 +15,7 @@ RUN mvn -q package -DskipTests
 
 FROM eclipse-temurin:25-jre-alpine
 WORKDIR /app
-COPY --from=api /api/target/tickboard-api-*.jar tickboard.jar
-ENV TICKBOARD_SERVER_DIR=/minecraft
+COPY --from=api /api/target/craftboard-api-*.jar craftboard.jar
+ENV CRAFTBOARD_SERVER_DIR=/minecraft
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "tickboard.jar"]
+ENTRYPOINT ["java", "-jar", "craftboard.jar"]

@@ -10,10 +10,10 @@
         <relativePath/>
     </parent>
 
-    <groupId>dev.tickboard</groupId>
-    <artifactId>tickboard-api</artifactId>
+    <groupId>dev.craftboard</groupId>
+    <artifactId>craftboard-api</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>tickboard-api</name>
+    <name>craftboard-api</name>
     <description>Stats API for a vanilla Minecraft server</description>
 
     <properties>

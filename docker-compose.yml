@@ -1,17 +1,17 @@
 services:
-  tickboard:
+  craftboard:
     build: .
-    container_name: tickboard
+    container_name: craftboard
     restart: unless-stopped
     ports:
       - "8080:8080"
     volumes:
-      # Server folder (the one with server.properties). Read only, tickboard never writes there.
+      # Server folder (the one with server.properties). Read only, craftboard never writes there.
       - ${MINECRAFT_DIR}:/minecraft:ro
     environment:
-      TICKBOARD_PUBLIC_ADDRESS: ${TICKBOARD_PUBLIC_ADDRESS:-localhost}
-      TICKBOARD_RCON_ENABLED: ${TICKBOARD_RCON_ENABLED:-false}
-      TICKBOARD_RCON_HOST: ${TICKBOARD_RCON_HOST:-host.docker.internal}
-      TICKBOARD_RCON_PASSWORD: ${TICKBOARD_RCON_PASSWORD:-}
+      CRAFTBOARD_PUBLIC_ADDRESS: ${CRAFTBOARD_PUBLIC_ADDRESS:-localhost}
+      CRAFTBOARD_RCON_ENABLED: ${CRAFTBOARD_RCON_ENABLED:-false}
+      CRAFTBOARD_RCON_HOST: ${CRAFTBOARD_RCON_HOST:-host.docker.internal}
+      CRAFTBOARD_RCON_PASSWORD: ${CRAFTBOARD_RCON_PASSWORD:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"

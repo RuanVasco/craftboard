@@ -1,9 +1,9 @@
 spring:
   application:
-    name: tickboard
+    name: craftboard
   threads:
     virtual:
       enabled: true
 
-# tickboard.* keys bind from env vars too (TICKBOARD_SERVER_DIR, TICKBOARD_RCON_PASSWORD, ...).
+# craftboard.* keys bind from env vars too (CRAFTBOARD_SERVER_DIR, CRAFTBOARD_RCON_PASSWORD, ...).
 # Defaults live in MinecraftProperties.
