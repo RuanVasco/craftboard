@@ -6,6 +6,14 @@ export interface PlayerStats {
   updatedAt: string;
 }
 
+export type Period = 'week' | 'month' | 'all';
+
+export interface SnapshotPoint {
+  capturedAt: string;
+  deaths: number;
+  playTimeTicks: number;
+}
+
 export interface ServerInfo {
   address: string;
   motd: string;
@@ -23,6 +31,7 @@ async function get<T>(path: string): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export const fetchPlayers = () => get<PlayerStats[]>('/api/players');
+export const fetchPlayers = (period: Period) => get<PlayerStats[]>(`/api/players?period=${period}`);
+export const fetchHistory = (uuid: string) => get<SnapshotPoint[]>(`/api/players/${uuid}/history`);
 export const fetchServer = () => get<ServerInfo>('/api/server');
 export const STREAM_URL = '/api/stream';

@@ -8,9 +8,10 @@ type SortKey = 'playTimeTicks' | 'deaths';
 interface Props {
   players: PlayerStats[];
   onlinePlayers: string[] | null;
+  emptyMessage: string;
 }
 
-export function PlayerRanking({ players, onlinePlayers }: Props) {
+export function PlayerRanking({ players, onlinePlayers, emptyMessage }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>('playTimeTicks');
 
   const sorted = useMemo(
@@ -50,7 +51,7 @@ export function PlayerRanking({ players, onlinePlayers }: Props) {
           {sorted.length === 0 && (
             <tr>
               <td colSpan={4} className="px-4 py-10 text-center text-ink-muted">
-                Nenhum jogador ainda.
+                {emptyMessage}
               </td>
             </tr>
           )}

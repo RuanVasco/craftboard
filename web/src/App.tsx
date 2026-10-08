@@ -1,11 +1,15 @@
 import { CircleAlert } from 'lucide-react';
+import { useState } from 'react';
+import type { Period } from './api';
+import { PeriodFilter } from './components/PeriodFilter';
 import { PlayerRanking } from './components/PlayerRanking';
 import { ServerBanner } from './components/ServerBanner';
 import { StatTiles } from './components/StatTiles';
 import { useLiveData } from './useLiveData';
 
 export default function App() {
-  const { players, server, error, live } = useLiveData();
+  const [period, setPeriod] = useState<Period>('all');
+  const { players, server, error, live } = useLiveData(period);
 
   return (
     <div className="min-h-screen">
@@ -17,8 +21,13 @@ export default function App() {
             Não foi possível carregar os dados ({error}).
           </p>
         )}
+        <PeriodFilter value={period} onChange={setPeriod} />
         <StatTiles players={players} />
-        <PlayerRanking players={players} onlinePlayers={server?.onlinePlayers ?? null} />
+        <PlayerRanking
+          players={players}
+          onlinePlayers={server?.onlinePlayers ?? null}
+          emptyMessage={period === 'all' ? 'Nenhum jogador ainda.' : 'Ninguém jogou neste período.'}
+        />
       </main>
     </div>
   );
