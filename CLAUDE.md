@@ -41,3 +41,9 @@ files (`usercache.json`, `world/stats/*.json`) and optionally talks to it over R
 cd api && mvn spring-boot:run      # uses ../dev-data by default
 cd web && npm run dev              # proxies /api to localhost:8080
 ```
+
+## Deploy
+
+- Push to `main` runs CI (`.github/workflows/ci.yml`); if green, the image is published to `ghcr.io/ruanvasco/craftboard` (`latest` + commit sha).
+- The home VM runs `docker-compose.yml` (production only, dev does not use compose). Its watchtower pulls new `latest` images every 5 min.
+- No database yet: stats live in memory and are rebuilt from the server files on startup.
