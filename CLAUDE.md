@@ -45,5 +45,5 @@ cd web && npm run dev              # proxies /api to localhost:8080
 ## Deploy
 
 - Push to `main` runs CI (`.github/workflows/ci.yml`); if green, the image is published to `ghcr.io/ruanvasco/craftboard` (`latest` + commit sha).
-- The home VM runs `docker compose -f docker-compose.prod.yml up -d`. `docker-compose.dev.yml` will hold dev only services (Postgres, see spec 001). Its watchtower pulls new `latest` images every 5 min.
+- The home VM runs `docker compose -f docker-compose.prod.yml up -d`. `docker-compose.dev.yml` will hold dev only services (Postgres, see spec 001). The prod watchtower pulls new `latest` images every 5 min.
 - No database yet: stats live in memory and are rebuilt from the server files on startup.
