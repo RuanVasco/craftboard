@@ -1,1 +1,55 @@
 @import "tailwindcss";
+
+/* Palette borrowed from formulei. */
+:root {
+  --bg: #f4f5fb;
+  --surface: #ffffff;
+  --ink: #242425;
+  --ink-muted: #7d7f8c;
+  --line: #e6e9f5;
+  --primary: #394ca4;
+  --primary-soft: #e6e9f5;
+  --banner: #293570;
+  --banner-ink: #edeef8;
+  --good: #3d8b40;
+  --bad: #c9473d;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #111218;
+    --surface: #1a1c24;
+    --ink: #edeef8;
+    --ink-muted: #a6a8b3;
+    --line: #2a2d3a;
+    --primary: #7d8ce0;
+    --primary-soft: #262a3d;
+    --banner: #1c2350;
+    --banner-ink: #edeef8;
+    --good: #6cc070;
+    --bad: #ef7a70;
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-line: var(--line);
+  --color-primary: var(--primary);
+  --color-primary-soft: var(--primary-soft);
+  --color-banner: var(--banner);
+  --color-banner-ink: var(--banner-ink);
+  --color-good: var(--good);
+  --color-bad: var(--bad);
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
