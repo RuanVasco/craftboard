@@ -30,20 +30,17 @@ Mesmo stack do formulei. Toda alteração de schema tem migration em `api/src/ma
 
 Container `postgres` no compose do craftboard, com volume próprio. Evita acoplar o ciclo de vida (backup, upgrade, downtime) dos dois projetos.
 
-### 3.3 Perfis do compose: dev e prod separados
+### 3.3 Compose de dev e prod em arquivos separados
 
-Com o Postgres, o dev passa a precisar de Docker para o banco. O compose ganha perfis:
+Com o Postgres, o dev passa a precisar de Docker para o banco. Mesmo padrão do formulei, um arquivo por ambiente:
 
-- **dev:** só o `postgres` (porta exposta em `localhost:5432`). API e web continuam rodando fora do Docker (`mvn spring-boot:run`, `npm run dev`).
-- **prod:** `craftboard`, `postgres` e `watchtower`. Postgres sem porta exposta no host, tag de imagem pinada (sem `latest`) e fora do watchtower, igual ao formulei: upgrade de banco é manual e com backup.
+- **`docker-compose.dev.yml`:** só o `postgres`, com porta exposta em `localhost:5432`. API e web continuam rodando fora do Docker (`mvn spring-boot:run`, `npm run dev`).
+- **`docker-compose.prod.yml`** (já existe, hoje só com `craftboard` e `watchtower`): ganha o `postgres` sem porta exposta no host, tag de imagem pinada (sem `latest`) e fora do watchtower. Upgrade de banco é manual e com backup.
 
-Formato decidido: **`profiles:` num único `docker-compose.yml`**.
+Uso:
 
-- `postgres-dev` (perfil `dev`): porta `5432` exposta no host, volume próprio de dev.
-- `postgres` (perfil `prod`): sem porta exposta, só acessível pela rede do compose.
-- `craftboard` e `watchtower`: perfil `prod`.
-- São dois serviços de banco porque o compose não varia atributos (como `ports`) por perfil.
-- Dev: `docker compose --profile dev up -d`. Prod: `COMPOSE_PROFILES=prod` no `.env` da VM, para `docker compose up -d` continuar sem flag.
+- Dev: `docker compose -f docker-compose.dev.yml up -d`
+- Prod: `docker compose -f docker-compose.prod.yml up -d`
 
 ### 3.4 Quando gravar snapshot
 
@@ -102,4 +99,4 @@ Sessões entram em migration própria, separada de `player` e `stat_snapshot`.
 
 - `api/src/main/java/dev/craftboard/stats/impl/StatsServiceImpl.java`: estado em memória e disparo do `StatsUpdatedEvent`.
 - `api/src/main/java/dev/craftboard/server/impl/ServerServiceImpl.java`: poll do RCON (`list`), base para as sessões.
-- `docker-compose.yml`: compose atual, só de produção.
+- `docker-compose.prod.yml`: compose de produção atual.
