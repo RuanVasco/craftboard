@@ -5,6 +5,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -19,7 +20,6 @@ import dev.craftboard.history.Period;
 import dev.craftboard.history.SnapshotPoint;
 import dev.craftboard.history.StatSnapshot;
 import dev.craftboard.history.StatSnapshotRepository;
-import dev.craftboard.player.Player;
 import dev.craftboard.player.PlayerRepository;
 import dev.craftboard.stats.PlayerStats;
 import dev.craftboard.stats.StatsService;
@@ -95,16 +95,15 @@ public class HistoryServiceImpl implements HistoryService {
 
     private void save(PlayerStats stats, boolean initial) {
         var now = Instant.now();
-        var player = players.findById(stats.uuid()).orElse(null);
-        if (player == null) {
-            player = players.save(new Player(stats.uuid(), stats.name(), now));
-            if (!initial) {
-                snapshots.save(new StatSnapshot(stats.uuid(), 0, 0, now));
-            }
-        }
+        // The session tracker may have created the player already, so the first snapshot is what
+        // tells a newcomer apart, not the player row.
+        var player = players.findOrCreate(stats.uuid(), stats.name(), now);
         player.setName(stats.name());
 
         var latest = snapshots.findFirstByPlayerUuidOrderByCapturedAtDescIdDesc(stats.uuid());
+        if (latest.isEmpty() && !initial) {
+            latest = Optional.of(snapshots.save(new StatSnapshot(stats.uuid(), 0, 0, now)));
+        }
         if (latest.isPresent() && sameValues(latest.get(), stats)) {
             return;
         }

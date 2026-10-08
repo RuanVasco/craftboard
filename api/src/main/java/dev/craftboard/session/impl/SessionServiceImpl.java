@@ -13,7 +13,6 @@ import org.springframework.transaction.TransactionException;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import dev.craftboard.player.OfflineUuid;
-import dev.craftboard.player.Player;
 import dev.craftboard.player.PlayerRepository;
 import dev.craftboard.server.OnlinePlayersChangedEvent;
 import dev.craftboard.session.PlayerSession;
@@ -54,8 +53,7 @@ public class SessionServiceImpl implements SessionService {
                 }
             }
             online.forEach((uuid, name) -> {
-                var player = players.findById(uuid).orElseGet(() -> players.save(new Player(uuid, name, now)));
-                player.setLastSeen(now);
+                players.findOrCreate(uuid, name, now).setLastSeen(now);
                 sessions.save(new PlayerSession(uuid, now));
             });
         });

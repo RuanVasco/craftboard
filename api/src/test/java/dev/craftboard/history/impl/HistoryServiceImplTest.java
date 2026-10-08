@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 import org.junit.jupiter.api.Test;
@@ -19,6 +20,7 @@ import dev.craftboard.history.StatSnapshotRepository;
 import dev.craftboard.player.OfflineUuid;
 import dev.craftboard.player.Player;
 import dev.craftboard.player.PlayerRepository;
+import dev.craftboard.session.SessionService;
 import dev.craftboard.stats.PlayerStats;
 import dev.craftboard.stats.StatsService;
 import dev.craftboard.stats.StatsUpdatedEvent;
@@ -33,6 +35,7 @@ class HistoryServiceImplTest extends IntegrationTest {
     private final StatsService statsService;
     private final PlayerRepository players;
     private final StatSnapshotRepository snapshots;
+    private final SessionService sessionService;
     private final MockMvc mvc;
 
     @Test
@@ -47,6 +50,19 @@ class HistoryServiceImplTest extends IntegrationTest {
     void newPlayerAfterBackfillStartsFromZero() {
         historyService.backfill();
         var newcomer = new PlayerStats(UUID.randomUUID(), "Newcomer", 1, 500, Instant.now());
+
+        historyService.onStatsUpdated(new StatsUpdatedEvent(newcomer));
+
+        assertThat(historyService.history(newcomer.uuid(), null, null))
+                .extracting(p -> p.playTimeTicks())
+                .containsExactly(0L, 500L);
+    }
+
+    @Test
+    void newPlayerSeenByRconFirstStillStartsFromZero() {
+        historyService.backfill();
+        sessionService.reconcile(List.of("Newcomer"));
+        var newcomer = new PlayerStats(OfflineUuid.of("Newcomer"), "Newcomer", 0, 500, Instant.now());
 
         historyService.onStatsUpdated(new StatsUpdatedEvent(newcomer));
 
