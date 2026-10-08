@@ -2,6 +2,7 @@ package dev.craftboard;
 
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 
@@ -10,6 +11,7 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
  * container that a previous class already stopped.
  */
 @SpringBootTest
+@AutoConfigureMockMvc
 @Testcontainers(disabledWithoutDocker = true)
 public abstract class IntegrationTest {
 
