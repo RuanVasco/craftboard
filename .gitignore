@@ -1,0 +1,20 @@
+# Java
+api/target/
+*.class
+
+# Node
+web/node_modules/
+web/dist/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Env
+.env
+*.local
+
+# OS
+.DS_Store
+Thumbs.db
