@@ -37,7 +37,11 @@ Com o Postgres, o dev passa a precisar de Docker para o banco. O compose ganha p
 - **dev:** só o `postgres` (porta exposta em `localhost:5432`). API e web continuam rodando fora do Docker (`mvn spring-boot:run`, `npm run dev`).
 - **prod:** `craftboard`, `postgres` e `watchtower`. Postgres sem porta exposta no host, tag de imagem pinada (sem `latest`) e fora do watchtower, igual ao formulei: upgrade de banco é manual e com backup.
 
-Formato a decidir na implementação: `profiles:` no mesmo `docker-compose.yml` ou arquivos separados (`docker-compose.dev.yml` e `docker-compose.prod.yml`, como no formulei). Preferência inicial por arquivos separados, pelo paralelo com o formulei.
+Formato decidido: **`profiles:` num único `docker-compose.yml`**.
+
+- `postgres` participa dos dois perfis (`profiles: [dev, prod]`); `craftboard` e `watchtower` só de `prod`.
+- Dev: `docker compose --profile dev up -d`. Prod: `docker compose --profile prod up -d` (ou `COMPOSE_PROFILES=prod` no `.env` da VM, para o comando ficar sem flag).
+- O que muda entre perfis no `postgres` (porta exposta só em dev) fica num serviço separado, `postgres-dev`, em vez de condicionar a porta, já que o compose não varia atributos por perfil.
 
 ### 3.4 Quando gravar snapshot
 
