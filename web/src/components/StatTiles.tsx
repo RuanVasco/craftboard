@@ -1,16 +1,18 @@
-import { Clock, Skull, Users, type LucideIcon } from 'lucide-react';
+import { Clock, Pickaxe, Route, Skull, Sword, Users, type LucideIcon } from 'lucide-react';
 import type { PlayerStats } from '../api';
-import { numberFormat, ticksToHours } from '../format';
+import { compactFormat, numberFormat, ticksToHours } from '../format';
 
 export function StatTiles({ players }: { players: PlayerStats[] }) {
-  const totalTicks = players.reduce((sum, p) => sum + p.playTimeTicks, 0);
-  const totalDeaths = players.reduce((sum, p) => sum + p.deaths, 0);
+  const sum = (pick: (p: PlayerStats) => number) => players.reduce((total, p) => total + pick(p), 0);
 
   return (
-    <section className="grid grid-cols-3 gap-2 sm:gap-3">
+    <section className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-6">
       <Tile icon={Users} label="Jogadores" value={numberFormat.format(players.length)} />
-      <Tile icon={Clock} label="Horas" value={numberFormat.format(ticksToHours(totalTicks))} />
-      <Tile icon={Skull} label="Mortes" value={numberFormat.format(totalDeaths)} />
+      <Tile icon={Clock} label="Horas" value={numberFormat.format(ticksToHours(sum((p) => p.playTimeTicks)))} />
+      <Tile icon={Skull} label="Mortes" value={numberFormat.format(sum((p) => p.deaths))} />
+      <Tile icon={Sword} label="Abates" value={compactFormat.format(sum((p) => p.mobKills))} />
+      <Tile icon={Pickaxe} label="Blocos" value={compactFormat.format(sum((p) => p.blocksMined))} />
+      <Tile icon={Route} label="Km percorridos" value={compactFormat.format(Math.round(sum((p) => p.distanceCm) / 100_000))} />
     </section>
   );
 }
@@ -18,11 +20,11 @@ export function StatTiles({ players }: { players: PlayerStats[] }) {
 function Tile({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: string }) {
   return (
     <div className="rounded-xl border border-line bg-surface p-3 sm:p-4">
-      <p className="flex items-center gap-1.5 text-xs text-ink-muted sm:gap-2 sm:text-sm">
-        <Icon className="size-4" aria-hidden />
+      <p className="flex items-center gap-1.5 truncate text-xs text-ink-muted sm:gap-2 sm:text-sm">
+        <Icon className="size-4 shrink-0" aria-hidden />
         {label}
       </p>
-      <p className="mt-1 text-2xl font-semibold tabular-nums sm:text-3xl">{value}</p>
+      <p className="mt-1 truncate text-2xl font-semibold tabular-nums sm:text-3xl">{value}</p>
     </div>
   );
 }

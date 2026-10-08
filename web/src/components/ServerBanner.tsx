@@ -1,6 +1,26 @@
-import { Check, Copy, Radio, Server, Users } from 'lucide-react';
-import { useState } from 'react';
-import type { ServerInfo } from '../api';
+import {
+  CalendarDays,
+  Check,
+  CloudLightning,
+  CloudRain,
+  Copy,
+  Gamepad2,
+  Moon,
+  Radio,
+  Server,
+  Skull,
+  Sun,
+  Swords,
+  Users,
+  type LucideIcon,
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
+import type { ServerInfo, WorldInfo } from '../api';
+import { formatTimeOfDay, isNight, numberFormat } from '../format';
+import { DIFFICULTIES, GAME_MODES } from '../names';
+
+const TICKS_PER_DAY = 24000;
+const MS_PER_TICK = 50;
 
 interface Props {
   server: ServerInfo | null;
@@ -52,7 +72,63 @@ export function ServerBanner({ server, live }: Props) {
           </span>
         </div>
       </div>
+      {server && <WorldStrip server={server} />}
     </header>
+  );
+}
+
+function WorldStrip({ server }: { server: ServerInfo }) {
+  const world = server.world;
+  // The clock only advances while someone keeps the server ticking (it pauses when empty).
+  const ticking = (server.onlinePlayers?.length ?? 0) > 0;
+  const timeOfDay = useWorldClock(world, ticking);
+
+  return (
+    <div className="border-t border-white/10">
+      <ul className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-5 gap-y-1.5 px-4 py-2.5 text-xs opacity-90 sm:text-sm">
+        {world?.version && <Fact icon={Server} label={`Versão ${world.version}`} />}
+        {world?.day != null && <Fact icon={CalendarDays} label={`Dia ${numberFormat.format(world.day)}`} />}
+        {timeOfDay != null && (
+          <Fact
+            icon={isNight(timeOfDay) ? Moon : Sun}
+            label={`${formatTimeOfDay(timeOfDay)} no jogo`}
+            title={ticking ? 'Horário estimado desde o último save' : 'Horário do último save'}
+          />
+        )}
+        {world && <Fact icon={world.thundering ? CloudLightning : world.raining ? CloudRain : Sun} label={weather(world)} />}
+        <Fact icon={Gamepad2} label={`${GAME_MODES[server.gameMode] ?? server.gameMode}, ${DIFFICULTIES[server.difficulty] ?? server.difficulty}`} />
+        <Fact icon={Swords} label={server.pvp ? 'PvP ligado' : 'PvP desligado'} />
+        {server.hardcore && <Fact icon={Skull} label="Hardcore" />}
+      </ul>
+    </div>
+  );
+}
+
+function useWorldClock(world: WorldInfo | null, ticking: boolean): number | null {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!ticking) return;
+    const timer = setInterval(() => setNow(Date.now()), 10_000);
+    return () => clearInterval(timer);
+  }, [ticking]);
+
+  if (world?.timeOfDay == null) return null;
+  if (!ticking) return world.timeOfDay;
+  const elapsedTicks = Math.max(0, (now - Date.parse(world.capturedAt)) / MS_PER_TICK);
+  return Math.floor(world.timeOfDay + elapsedTicks) % TICKS_PER_DAY;
+}
+
+function weather(world: WorldInfo): string {
+  if (world.thundering) return 'Tempestade';
+  return world.raining ? 'Chovendo' : 'Céu limpo';
+}
+
+function Fact({ icon: Icon, label, title }: { icon: LucideIcon; label: string; title?: string }) {
+  return (
+    <li className="flex items-center gap-1.5" title={title}>
+      <Icon className="size-3.5 opacity-80" aria-hidden />
+      {label}
+    </li>
   );
 }
 
