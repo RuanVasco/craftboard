@@ -71,3 +71,11 @@ export const dateTimeFormat = new Intl.DateTimeFormat('pt-BR', { dateStyle: 'sho
 export const dateFormat = new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: '2-digit' });
 
 export const timeFormat = new Intl.DateTimeFormat('pt-BR', { timeStyle: 'short' });
+
+// Splits "129,6 mil" into number and suffix so tiles can render the suffix smaller.
+export function compactParts(value: number): { number: string; suffix: string } {
+  const parts = compactFormat.formatToParts(value);
+  const suffix = parts.filter((p) => p.type === 'compact').map((p) => p.value).join('');
+  const number = parts.filter((p) => p.type !== 'compact').map((p) => p.value).join('').trim();
+  return { number, suffix };
+}
