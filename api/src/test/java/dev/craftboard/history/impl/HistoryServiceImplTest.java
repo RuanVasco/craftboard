@@ -133,6 +133,7 @@ class HistoryServiceImplTest extends IntegrationTest {
     void playersEndpointAcceptsLowercasePeriod() throws Exception {
         mvc.perform(get("/api/players").param("period", "week")).andExpect(status().isOk());
         mvc.perform(get("/api/players").param("period", "year")).andExpect(status().isBadRequest());
+        mvc.perform(get("/api/players").param("sort", "height")).andExpect(status().isBadRequest());
     }
 
     @Test

@@ -1,6 +1,5 @@
 package dev.craftboard.stats;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -12,8 +11,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import dev.craftboard.history.HistoryService;
 import dev.craftboard.history.Period;
+import dev.craftboard.ranking.RankingPage;
+import dev.craftboard.ranking.RankingService;
+import dev.craftboard.ranking.RankingSort;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -21,12 +22,17 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class StatsController {
 
-    private final HistoryService historyService;
+    private final RankingService rankingService;
     private final StatsService statsService;
 
     @GetMapping
-    public List<PlayerStats> list(@RequestParam(defaultValue = "all") Period period) {
-        return historyService.ranking(period);
+    public RankingPage list(
+            @RequestParam(defaultValue = "all") Period period,
+            @RequestParam(defaultValue = "playTime") RankingSort sort,
+            @RequestParam(defaultValue = "") String q,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return rankingService.ranking(period, sort, q, page, size);
     }
 
     /** Every stat of one player, by category and key. */
