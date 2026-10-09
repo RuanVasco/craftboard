@@ -1,31 +1,33 @@
-import { Search, X } from 'lucide-react';
-import { useMemo, useState } from 'react';
-import type { PlayerStats } from '../api';
+import { ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
+import type { ReactNode } from 'react';
+import type { PlayerStats, RankingEntry, RankingPage, RankingSort } from '../api';
 import { compactFormat, formatDistance, formatPlayTime, numberFormat } from '../format';
 import { Avatar } from './Avatar';
 
-type MetricKey = 'playTime' | 'deaths' | 'mobKills' | 'playerKills' | 'blocksMined' | 'distance' | 'advancements';
-
 interface Metric {
-  key: MetricKey;
+  key: RankingSort;
   label: string;
-  value: (p: PlayerStats, advancements: Record<string, number>) => number;
+  value: (entry: RankingEntry) => number;
   format: (value: number) => string;
 }
 
 const METRICS: Metric[] = [
-  { key: 'playTime', label: 'Tempo jogado', value: (p) => p.playTimeTicks, format: formatPlayTime },
-  { key: 'deaths', label: 'Mortes', value: (p) => p.deaths, format: (v) => numberFormat.format(v) },
-  { key: 'mobKills', label: 'Abates', value: (p) => p.mobKills, format: (v) => numberFormat.format(v) },
-  { key: 'playerKills', label: 'PvP', value: (p) => p.playerKills, format: (v) => numberFormat.format(v) },
-  { key: 'blocksMined', label: 'Blocos', value: (p) => p.blocksMined, format: (v) => compactFormat.format(v) },
-  { key: 'distance', label: 'Distância', value: (p) => p.distanceCm, format: formatDistance },
-  { key: 'advancements', label: 'Conquistas', value: (p, a) => a[p.uuid] ?? 0, format: (v) => numberFormat.format(v) },
+  { key: 'playTime', label: 'Tempo jogado', value: (e) => e.player.playTimeTicks, format: formatPlayTime },
+  { key: 'deaths', label: 'Mortes', value: (e) => e.player.deaths, format: (v) => numberFormat.format(v) },
+  { key: 'mobKills', label: 'Abates', value: (e) => e.player.mobKills, format: (v) => numberFormat.format(v) },
+  { key: 'playerKills', label: 'PvP', value: (e) => e.player.playerKills, format: (v) => numberFormat.format(v) },
+  { key: 'blocksMined', label: 'Blocos', value: (e) => e.player.blocksMined, format: (v) => compactFormat.format(v) },
+  { key: 'distance', label: 'Distância', value: (e) => e.player.distanceCm, format: formatDistance },
+  { key: 'advancements', label: 'Conquistas', value: (e) => e.advancements, format: (v) => numberFormat.format(v) },
 ];
 
 interface Props {
-  players: PlayerStats[];
-  advancements: Record<string, number>;
+  ranking: RankingPage | null;
+  sort: RankingSort;
+  onSortChange: (sort: RankingSort) => void;
+  query: string;
+  onQueryChange: (query: string) => void;
+  onPageChange: (page: number) => void;
   // Advancement counts are totals, so they only make sense next to totals.
   showAdvancements: boolean;
   onlinePlayers: string[] | null;
@@ -33,26 +35,23 @@ interface Props {
   onSelect: (player: PlayerStats) => void;
 }
 
-export function PlayerRanking({ players, advancements, showAdvancements, onlinePlayers, emptyMessage, onSelect }: Props) {
-  const [selectedKey, setSelectedKey] = useState<MetricKey>('playTime');
-  const [query, setQuery] = useState('');
+export function PlayerRanking({
+  ranking,
+  sort,
+  onSortChange,
+  query,
+  onQueryChange,
+  onPageChange,
+  showAdvancements,
+  onlinePlayers,
+  emptyMessage,
+  onSelect,
+}: Props) {
   const metrics = showAdvancements ? METRICS : METRICS.filter((m) => m.key !== 'advancements');
-  const active = metrics.find((m) => m.key === selectedKey) ?? metrics[0];
-
-  const sorted = useMemo(
-    () =>
-      [...players].sort(
-        (a, b) => active.value(b, advancements) - active.value(a, advancements) || a.name.localeCompare(b.name),
-      ),
-    [players, advancements, active],
-  );
-  // Ranks come from the full list, so a filtered row still shows the player's real position.
-  const visible = useMemo(() => {
-    const ranked = sorted.map((player, index) => ({ player, rank: index + 1 }));
-    const needle = normalize(query);
-    return needle ? ranked.filter(({ player }) => matches(player, needle)) : ranked;
-  }, [sorted, query]);
-  const max = Math.max(1, ...players.map((p) => active.value(p, advancements)));
+  const active = metrics.find((m) => m.key === sort) ?? metrics[0];
+  const others = metrics.filter((m) => m.key !== active.key);
+  const items = ranking?.items ?? [];
+  const max = Math.max(1, ranking?.maxValue ?? 0);
   const online = new Set(onlinePlayers ?? []);
 
   return (
@@ -67,7 +66,7 @@ export function PlayerRanking({ players, advancements, showAdvancements, onlineP
                 type="button"
                 role="radio"
                 aria-checked={checked}
-                onClick={() => setSelectedKey(metric.key)}
+                onClick={() => onSortChange(metric.key)}
                 className={`rounded-full border px-3 py-1 text-xs font-medium transition sm:text-sm ${
                   checked ? 'border-primary bg-primary text-surface' : 'border-line bg-surface text-ink-muted hover:text-ink'
                 }`}
@@ -77,7 +76,7 @@ export function PlayerRanking({ players, advancements, showAdvancements, onlineP
             );
           })}
         </div>
-        <SearchBox value={query} onChange={setQuery} />
+        <SearchBox value={query} onChange={onQueryChange} />
       </div>
       <div className="overflow-x-auto rounded-xl border border-line bg-surface">
         <table className="w-full text-sm">
@@ -88,58 +87,93 @@ export function PlayerRanking({ players, advancements, showAdvancements, onlineP
               <th className="px-3 py-3 font-medium text-ink sm:px-4" aria-sort="descending">
                 {active.label}
               </th>
-              {metrics
-                .filter((m) => m.key !== active.key)
-                .map((m) => (
-                  <th key={m.key} className="hidden px-3 py-3 text-right font-medium lg:table-cell">
-                    {m.label}
-                  </th>
-                ))}
+              {others.map((m) => (
+                <th key={m.key} className="hidden px-3 py-3 text-right font-medium lg:table-cell">
+                  {m.label}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
-            {visible.map(({ player, rank }) => (
-              <tr key={player.uuid} className="border-b border-line last:border-0">
-                <td className="px-3 py-3 tabular-nums text-ink-muted sm:px-4">{rank}</td>
+            {items.map((entry) => (
+              <tr key={entry.player.uuid} className="border-b border-line last:border-0">
+                <td className="px-3 py-3 tabular-nums text-ink-muted sm:px-4">{entry.rank}</td>
                 <td className="px-2 py-3">
-                  <PlayerName name={player.name} online={online.has(player.name)} onClick={() => onSelect(player)} />
-                </td>
-                <td className="px-3 py-3 sm:px-4">
-                  <BarCell
-                    value={active.format(active.value(player, advancements))}
-                    ratio={active.value(player, advancements) / max}
+                  <PlayerName
+                    name={entry.player.name}
+                    online={online.has(entry.player.name)}
+                    onClick={() => onSelect(entry.player)}
                   />
                 </td>
-                {metrics
-                  .filter((m) => m.key !== active.key)
-                  .map((m) => (
-                    <td key={m.key} className="hidden px-3 py-3 text-right tabular-nums text-ink-muted lg:table-cell">
-                      {m.format(m.value(player, advancements))}
-                    </td>
-                  ))}
+                <td className="px-3 py-3 sm:px-4">
+                  <BarCell value={active.format(active.value(entry))} ratio={active.value(entry) / max} />
+                </td>
+                {others.map((m) => (
+                  <td key={m.key} className="hidden px-3 py-3 text-right tabular-nums text-ink-muted lg:table-cell">
+                    {m.format(m.value(entry))}
+                  </td>
+                ))}
               </tr>
             ))}
-            {visible.length === 0 && (
+            {ranking && items.length === 0 && (
               <tr>
-                <td colSpan={3 + metrics.length} className="px-4 py-10 text-center text-ink-muted">
-                  {sorted.length === 0 ? emptyMessage : 'Nenhum jogador encontrado.'}
+                <td colSpan={3 + others.length} className="px-4 py-10 text-center text-ink-muted">
+                  {ranking.totals.players === 0 ? emptyMessage : 'Nenhum jogador encontrado.'}
                 </td>
               </tr>
             )}
           </tbody>
         </table>
       </div>
+      {ranking && ranking.totalPages > 1 && <Pagination ranking={ranking} onPageChange={onPageChange} />}
     </section>
   );
 }
 
-// Dashes are dropped so a UUID matches whether it is pasted with or without them.
-function normalize(text: string): string {
-  return text.trim().toLowerCase().replaceAll('-', '');
+function Pagination({ ranking, onPageChange }: { ranking: RankingPage; onPageChange: (page: number) => void }) {
+  const { page, size, totalItems, totalPages } = ranking;
+  const first = page * size + 1;
+  const last = Math.min((page + 1) * size, totalItems);
+
+  return (
+    <nav aria-label="Páginas do ranking" className="flex items-center justify-between gap-3 text-sm text-ink-muted">
+      <span className="tabular-nums">
+        {numberFormat.format(first)} a {numberFormat.format(last)} de {numberFormat.format(totalItems)}
+      </span>
+      <div className="flex items-center gap-1">
+        <PageButton label="Página anterior" disabled={page === 0} onClick={() => onPageChange(page - 1)}>
+          <ChevronLeft className="size-4" aria-hidden />
+        </PageButton>
+        <span className="px-2 tabular-nums">
+          {page + 1} de {totalPages}
+        </span>
+        <PageButton label="Próxima página" disabled={page >= totalPages - 1} onClick={() => onPageChange(page + 1)}>
+          <ChevronRight className="size-4" aria-hidden />
+        </PageButton>
+      </div>
+    </nav>
+  );
 }
 
-function matches(player: PlayerStats, needle: string): boolean {
-  return normalize(player.name).includes(needle) || normalize(player.uuid).includes(needle);
+interface PageButtonProps {
+  label: string;
+  disabled: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}
+
+function PageButton({ label, disabled, onClick, children }: PageButtonProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={label}
+      className="rounded-lg border border-line bg-surface p-1.5 transition hover:text-ink disabled:opacity-40 disabled:hover:text-ink-muted"
+    >
+      {children}
+    </button>
+  );
 }
 
 function SearchBox({ value, onChange }: { value: string; onChange: (value: string) => void }) {

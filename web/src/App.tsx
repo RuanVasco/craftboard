@@ -13,28 +13,35 @@ import { Section } from './components/Section';
 import { ServerBanner } from './components/ServerBanner';
 import { StatTiles } from './components/StatTiles';
 import { useLiveData } from './useLiveData';
+import { useRanking } from './useRanking';
 
 export default function App() {
   const [period, setPeriod] = useState<Period>('all');
   const [selected, setSelected] = useState<SelectedPlayer | null>(null);
   const closePanel = useCallback(() => setSelected(null), []);
-  const { players, server, overview, advancements, activity, feed, error, live, statsVersion } = useLiveData(period);
+  const { server, overview, advancements, activity, feed, error, live, statsVersion } = useLiveData();
+  const ranking = useRanking(period, statsVersion);
+  const loadError = error ?? ranking.error;
 
   return (
     <div className="min-h-screen">
       <ServerBanner server={server} live={live} />
       <main className="mx-auto flex max-w-5xl flex-col gap-4 px-4 py-6">
-        {error && (
+        {loadError && (
           <p className="flex items-center gap-2 rounded-lg border border-bad/30 bg-bad/10 px-4 py-3 text-sm text-bad">
             <CircleAlert className="size-4" aria-hidden />
-            Não foi possível carregar os dados ({error}).
+            Não foi possível carregar os dados ({loadError}).
           </p>
         )}
         <PeriodFilter value={period} onChange={setPeriod} />
-        <StatTiles players={players} />
+        <StatTiles totals={ranking.data?.totals} />
         <PlayerRanking
-          players={players}
-          advancements={advancements?.counts ?? {}}
+          ranking={ranking.data}
+          sort={ranking.sort}
+          onSortChange={ranking.setSort}
+          query={ranking.query}
+          onQueryChange={ranking.setQuery}
+          onPageChange={ranking.setPage}
           showAdvancements={period === 'all'}
           onlinePlayers={server?.onlinePlayers ?? null}
           emptyMessage={period === 'all' ? 'Nenhum jogador ainda.' : 'Ninguém jogou neste período.'}

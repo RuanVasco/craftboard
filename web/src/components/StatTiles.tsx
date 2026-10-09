@@ -1,18 +1,27 @@
 import { Clock, Pickaxe, Route, Skull, Sword, Users, type LucideIcon } from 'lucide-react';
-import type { PlayerStats } from '../api';
+import type { RankingTotals } from '../api';
 import { compactParts, numberFormat, ticksToHours } from '../format';
 
-export function StatTiles({ players }: { players: PlayerStats[] }) {
-  const sum = (pick: (p: PlayerStats) => number) => players.reduce((total, p) => total + pick(p), 0);
-  const km = compactParts(Math.round(sum((p) => p.distanceCm) / 100_000));
+const EMPTY: RankingTotals = {
+  players: 0,
+  playTimeTicks: 0,
+  deaths: 0,
+  mobKills: 0,
+  playerKills: 0,
+  blocksMined: 0,
+  distanceCm: 0,
+};
+
+export function StatTiles({ totals = EMPTY }: { totals?: RankingTotals }) {
+  const km = compactParts(Math.round(totals.distanceCm / 100_000));
 
   return (
     <section className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-6">
-      <Tile icon={Users} label="Jogadores" value={numberFormat.format(players.length)} />
-      <Tile icon={Clock} label="Horas" value={numberFormat.format(ticksToHours(sum((p) => p.playTimeTicks)))} />
-      <Tile icon={Skull} label="Mortes" value={numberFormat.format(sum((p) => p.deaths))} />
-      <Tile icon={Sword} label="Abates" {...compact(sum((p) => p.mobKills))} />
-      <Tile icon={Pickaxe} label="Blocos" {...compact(sum((p) => p.blocksMined))} />
+      <Tile icon={Users} label="Jogadores" value={numberFormat.format(totals.players)} />
+      <Tile icon={Clock} label="Horas" value={numberFormat.format(ticksToHours(totals.playTimeTicks))} />
+      <Tile icon={Skull} label="Mortes" value={numberFormat.format(totals.deaths)} />
+      <Tile icon={Sword} label="Abates" {...compact(totals.mobKills)} />
+      <Tile icon={Pickaxe} label="Blocos" {...compact(totals.blocksMined)} />
       <Tile icon={Route} label="Distância" value={km.number} unit={`${km.suffix} km`.trim()} />
     </section>
   );

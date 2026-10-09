@@ -12,6 +12,43 @@ export interface PlayerStats {
 
 export type Period = 'week' | 'month' | 'all';
 
+export type RankingSort = 'playTime' | 'deaths' | 'mobKills' | 'playerKills' | 'blocksMined' | 'distance' | 'advancements';
+
+export interface RankingEntry {
+  // Position in the full ranking, also when the list is filtered by a search.
+  rank: number;
+  player: PlayerStats;
+  advancements: number;
+}
+
+export interface RankingTotals {
+  players: number;
+  playTimeTicks: number;
+  deaths: number;
+  mobKills: number;
+  playerKills: number;
+  blocksMined: number;
+  distanceCm: number;
+}
+
+export interface RankingPage {
+  items: RankingEntry[];
+  page: number;
+  size: number;
+  totalItems: number;
+  totalPages: number;
+  maxValue: number;
+  totals: RankingTotals;
+}
+
+export interface RankingQuery {
+  period: Period;
+  sort: RankingSort;
+  q: string;
+  page: number;
+  size: number;
+}
+
 export interface SnapshotPoint {
   capturedAt: string;
   deaths: number;
@@ -146,7 +183,8 @@ async function getOptional<T>(path: string): Promise<T | null> {
   return response.json() as Promise<T>;
 }
 
-export const fetchPlayers = (period: Period) => get<PlayerStats[]>(`/api/players?period=${period}`);
+export const fetchRanking = ({ period, sort, q, page, size }: RankingQuery) =>
+  get<RankingPage>(`/api/players?${new URLSearchParams({ period, sort, q, page: String(page), size: String(size) })}`);
 export const fetchHistory = (uuid: string) => get<SnapshotPoint[]>(`/api/players/${uuid}/history`);
 export const fetchPlayerStats = (uuid: string) => getOptional<StatCategories>(`/api/players/${uuid}/stats`);
 export const fetchPlayerState = (uuid: string) => getOptional<PlayerState>(`/api/players/${uuid}/state`);
