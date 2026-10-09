@@ -72,7 +72,10 @@ public class ServerServiceImpl implements ServerService {
             nowPlayers = parseList(rcon.command("list"));
             nowOnline = true;
         } catch (IOException e) {
-            log.debug("RCON list failed: {}", e.getMessage());
+            // Warn only on the transition, otherwise a stopped server floods the log every poll.
+            if (!Boolean.FALSE.equals(online)) {
+                log.warn("RCON unreachable at {}:{}: {}", properties.rcon().host(), properties.rcon().port(), e.toString());
+            }
             nowPlayers = List.of();
             nowOnline = false;
         }
