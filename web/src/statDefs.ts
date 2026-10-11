@@ -21,9 +21,10 @@ import {
   Sparkles,
   Sword,
   Swords,
+  Timer,
   type LucideIcon,
 } from 'lucide-react';
-import { formatDistance, formatPlayTime, numberFormat } from './format';
+import { formatDistance, formatPlayTime, formatSeconds, numberFormat } from './format';
 
 export interface StatDef {
   label: string;
@@ -59,4 +60,5 @@ export const STAT_DEFS: Record<string, StatDef> = {
   swim_one_cm: { label: 'Nadando', icon: Droplets, format: formatDistance },
   open_chest: { label: 'Ba√∫s abertos', icon: Package, format: count },
   leave_game: { label: 'Logins', icon: LogIn, format: count },
+  longest_session: { label: 'Sess„o mais longa', icon: Timer, format: formatSeconds },
 };

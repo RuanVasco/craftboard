@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.context.event.EventListener;
@@ -17,6 +18,7 @@ import dev.craftboard.player.PlayerRepository;
 import dev.craftboard.server.OnlinePlayersPolledEvent;
 import dev.craftboard.session.PlayerSession;
 import dev.craftboard.session.PlayerSessionRepository;
+import dev.craftboard.session.SessionLength;
 import dev.craftboard.session.SessionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -57,5 +59,15 @@ public class SessionServiceImpl implements SessionService {
                 sessions.save(new PlayerSession(uuid, now));
             });
         });
+    }
+
+    @Override
+    public Optional<SessionLength> longest() {
+        try {
+            return sessions.findLongest().map(l -> new SessionLength(l.getPlayerUuid(), l.getSeconds()));
+        } catch (DataAccessException e) {
+            log.warn("Could not read the longest session: {}", e.getMessage());
+            return Optional.empty();
+        }
     }
 }

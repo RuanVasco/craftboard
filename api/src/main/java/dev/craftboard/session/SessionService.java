@@ -1,6 +1,7 @@
 package dev.craftboard.session;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface SessionService {
 
@@ -10,4 +11,7 @@ public interface SessionService {
      * on the next one.
      */
     void reconcile(List<String> onlinePlayers);
+
+    /** The longest session ever recorded, empty without sessions or when the database is down. */
+    Optional<SessionLength> longest();
 }

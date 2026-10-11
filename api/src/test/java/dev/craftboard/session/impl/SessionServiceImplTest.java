@@ -2,15 +2,19 @@ package dev.craftboard.session.impl;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
 import dev.craftboard.IntegrationTest;
 import dev.craftboard.player.OfflineUuid;
+import dev.craftboard.player.Player;
 import dev.craftboard.player.PlayerRepository;
 import dev.craftboard.session.PlayerSession;
 import dev.craftboard.session.PlayerSessionRepository;
+import dev.craftboard.session.SessionLength;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
@@ -61,5 +65,21 @@ class SessionServiceImplTest extends IntegrationTest {
 
         assertThat(sessions.count()).isEqualTo(2);
         assertThat(sessions.findByLeftAtIsNull()).hasSize(1);
+    }
+
+    @Test
+    void longestSessionCountsOpenSessionsUpToNow() {
+        var now = Instant.now();
+        var steve = players.save(new Player(OfflineUuid.of("Steve"), "Steve", now)).getUuid();
+        var alex = players.save(new Player(OfflineUuid.of("Alex"), "Alex", now)).getUuid();
+        var closed = new PlayerSession(steve, now.minus(Duration.ofHours(2)));
+        closed.setLeftAt(now.minus(Duration.ofHours(1)));
+        sessions.save(closed);
+        sessions.save(new PlayerSession(alex, now.minus(Duration.ofHours(3))));
+
+        assertThat(sessionService.longest()).get()
+                .extracting(SessionLength::playerUuid).isEqualTo(alex);
+        assertThat(sessionService.longest()).get()
+                .extracting(SessionLength::seconds).satisfies(seconds -> assertThat(seconds).isBetween(3L * 3600, 3L * 3600 + 60));
     }
 }

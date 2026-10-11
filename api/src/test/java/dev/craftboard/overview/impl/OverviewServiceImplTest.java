@@ -12,6 +12,8 @@ import org.junit.jupiter.api.Test;
 import dev.craftboard.overview.Overview;
 import dev.craftboard.player.OfflineUuid;
 import dev.craftboard.player.PlayerDirectory;
+import dev.craftboard.session.SessionLength;
+import dev.craftboard.session.SessionService;
 import dev.craftboard.stats.PlayerStats;
 import dev.craftboard.stats.RawStats;
 import dev.craftboard.stats.StatsService;
@@ -31,7 +33,7 @@ class OverviewServiceImplTest {
                     "mined", Map.of("stone", 50L, "deepslate_diamond_ore", 5L),
                     "killed_by", Map.of("creeper", 1L, "zombie", 2L))));
 
-    private final OverviewServiceImpl service = new OverviewServiceImpl(new FixedStats(), new Names());
+    private final OverviewServiceImpl service = new OverviewServiceImpl(new FixedStats(), new Names(), new FixedSessions());
 
     @Test
     void picksTheLeaderOfEachStatAndSkipsStatsNobodyScored() {
@@ -42,6 +44,12 @@ class OverviewServiceImplTest {
                 new Overview.StatRecord("distance", STEVE, "Steve", 500),
                 new Overview.StatRecord("diamonds", ALEX, "Alex", 5));
         assertThat(records).extracting(Overview.StatRecord::key).doesNotContain("fish_caught");
+    }
+
+    @Test
+    void includesTheLongestSession() {
+        assertThat(service.overview().records())
+                .contains(new Overview.StatRecord("longest_session", STEVE, "Steve", 7200));
     }
 
     @Test
@@ -83,6 +91,18 @@ class OverviewServiceImplTest {
 
         @Override
         public void reload() {
+        }
+    }
+
+    private static class FixedSessions implements SessionService {
+
+        @Override
+        public void reconcile(List<String> onlinePlayers) {
+        }
+
+        @Override
+        public Optional<SessionLength> longest() {
+            return Optional.of(new SessionLength(STEVE, 7200));
         }
     }
 }

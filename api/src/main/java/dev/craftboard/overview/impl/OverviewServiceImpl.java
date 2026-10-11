@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import dev.craftboard.overview.Overview;
 import dev.craftboard.overview.OverviewService;
 import dev.craftboard.player.PlayerDirectory;
+import dev.craftboard.session.SessionService;
 import dev.craftboard.stats.RawStats;
 import dev.craftboard.stats.StatsService;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,7 @@ public class OverviewServiceImpl implements OverviewService {
 
     private final StatsService statsService;
     private final PlayerDirectory playerDirectory;
+    private final SessionService sessionService;
 
     @Override
     public Overview overview() {
@@ -50,6 +52,8 @@ public class OverviewServiceImpl implements OverviewService {
                 .max(Comparator.comparingLong((Map.Entry<UUID, RawStats> e) -> value.applyAsLong(e.getValue())))
                 .ifPresent(e -> leaders.add(new Overview.StatRecord(key, e.getKey(), nameOf(e.getKey()),
                         value.applyAsLong(e.getValue())))));
+        sessionService.longest().ifPresent(l -> leaders.add(
+                new Overview.StatRecord("longest_session", l.playerUuid(), nameOf(l.playerUuid()), l.seconds())));
 
         return new Overview(leaders, top(raw, "mined"), top(raw, "killed"), top(raw, "killed_by"));
     }
