@@ -15,10 +15,13 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.springframework.dao.DataAccessException;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import dev.craftboard.config.MinecraftProperties;
+import dev.craftboard.feed.FeedEntry;
+import dev.craftboard.feed.FeedEntryRepository;
 import dev.craftboard.feed.FeedEvent;
 import dev.craftboard.feed.FeedService;
 import dev.craftboard.feed.LogLine;
@@ -31,8 +34,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
- * Tails logs/latest.log. Events only live in memory: the server starts a fresh log on every
- * restart, so the feed shows what happened since then.
+ * Tails logs/latest.log and stores what it finds, since the server starts a fresh log on every
+ * restart. The log is read again from the top on startup, rows already stored are skipped.
+ * Events are also kept in memory to serve the feed while the database is down.
  */
 @Slf4j
 @Service
@@ -47,6 +51,7 @@ public class FeedServiceImpl implements FeedService {
     private final MinecraftProperties properties;
     private final PlayerDirectory playerDirectory;
     private final StreamService streamService;
+    private final FeedEntryRepository entries;
 
     private final Deque<FeedEvent> events = new ArrayDeque<>();
     private final Set<String> joinedPlayers = ConcurrentHashMap.newKeySet();
@@ -54,7 +59,12 @@ public class FeedServiceImpl implements FeedService {
 
     @Override
     public synchronized List<FeedEvent> recent() {
-        return new ArrayList<>(events).reversed();
+        try {
+            return entries.findTop100ByOrderByOccurredAtDescIdDesc().stream().map(FeedEntry::toEvent).toList();
+        } catch (DataAccessException e) {
+            log.debug("Serving the feed from memory: {}", e.getMessage());
+            return new ArrayList<>(events).reversed();
+        }
     }
 
     @PostConstruct
@@ -76,7 +86,10 @@ public class FeedServiceImpl implements FeedService {
                         lines.add(line);
                     });
             var lastWrite = Files.getLastModifiedTime(file).toInstant().atZone(properties.timezone());
-            datedBackwards(lines, lastWrite).forEach(this::add);
+            datedBackwards(lines, lastWrite).forEach(event -> {
+                add(event);
+                store(event);
+            });
         } catch (IOException e) {
             log.warn("Could not read {}: {}", file, e.getMessage());
         }
@@ -112,6 +125,7 @@ public class FeedServiceImpl implements FeedService {
                         rememberJoin(line);
                         var event = toEvent(line, liveDate(line));
                         add(event);
+                        store(event);
                         streamService.broadcast("feed", event);
                     });
         } catch (IOException e) {
@@ -167,6 +181,16 @@ public class FeedServiceImpl implements FeedService {
         events.addLast(event);
         while (events.size() > CAPACITY) {
             events.removeFirst();
+        }
+    }
+
+    private void store(FeedEvent event) {
+        try {
+            if (!entries.existsByOccurredAtAndMessage(event.at(), event.message())) {
+                entries.save(new FeedEntry(event));
+            }
+        } catch (DataAccessException e) {
+            log.warn("Could not store feed event: {}", e.getMessage());
         }
     }
 

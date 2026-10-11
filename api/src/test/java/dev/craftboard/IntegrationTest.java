@@ -14,7 +14,7 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
 @SpringBootTest
 @AutoConfigureMockMvc
 @Testcontainers(disabledWithoutDocker = true)
-@Sql(statements = "TRUNCATE player_session, stat_snapshot, player")
+@Sql(statements = "TRUNCATE feed_event, player_session, stat_snapshot, player")
 public abstract class IntegrationTest {
 
     @ServiceConnection

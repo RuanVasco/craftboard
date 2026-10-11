@@ -49,6 +49,6 @@ cd web && npm run dev              # proxies /api to localhost:8080
 
 - Push to `main` runs CI (`.github/workflows/ci.yml`); if green, the image is published to `ghcr.io/ruanvasco/craftboard` (`latest` + commit sha).
 - The home VM runs `docker compose -f docker-compose.prod.yml up -d`. `docker-compose.dev.yml` holds dev only services (Postgres). The prod watchtower pulls new `latest` images every 5 min.
-- Current stats live in memory and are rebuilt from the server files on startup. Postgres only keeps history (snapshots, sessions), see spec 001.
+- Current stats live in memory and are rebuilt from the server files on startup. Postgres only keeps history (snapshots, sessions, feed events), see spec 001.
 - Schema changes go through Flyway (`api/src/main/resources/db/migration`, `ddl-auto=validate`). Applied migrations are immutable.
 - Integration tests use Testcontainers and are skipped when Docker is not running.
