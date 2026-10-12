@@ -5,15 +5,21 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.time.ZonedDateTime;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Pattern;
+import java.util.zip.GZIPInputStream;
 
 import org.springframework.dao.DataAccessException;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -35,8 +41,9 @@ import lombok.extern.slf4j.Slf4j;
 
 /**
  * Tails logs/latest.log and stores what it finds, since the server starts a fresh log on every
- * restart. The log is read again from the top on startup, rows already stored are skipped.
- * Events are also kept in memory to serve the feed while the database is down.
+ * restart and every day. On startup the recent rotated logs and latest.log are read again from
+ * the top, rows already stored are skipped. Events are also kept in memory to serve the feed
+ * while the database is down.
  */
 @Slf4j
 @Service
@@ -47,6 +54,9 @@ public class FeedServiceImpl implements FeedService {
     private static final int MAX_READ_BYTES = 4 << 20;
     // Log lines carry no date, so a line stamped later than now (plus some clock skew) is from yesterday.
     private static final long CLOCK_SKEW_MINUTES = 5;
+    // Rotated logs are named after the day they were written, e.g. 2026-10-11-2.log.gz.
+    private static final Pattern ROTATED = Pattern.compile("(\\d{4}-\\d{2}-\\d{2})-(\\d+)\\.log\\.gz");
+    private static final int BACKFILL_DAYS = 7;
 
     private final MinecraftProperties properties;
     private final PlayerDirectory playerDirectory;
@@ -69,6 +79,7 @@ public class FeedServiceImpl implements FeedService {
 
     @PostConstruct
     synchronized void load() {
+        rotatedLogs().forEach(this::loadRotated);
         var file = properties.latestLogFile();
         if (!Files.exists(file)) {
             log.info("No server log at {}, the feed stays empty", file.toAbsolutePath());
@@ -92,6 +103,44 @@ public class FeedServiceImpl implements FeedService {
             });
         } catch (IOException e) {
             log.warn("Could not read {}: {}", file, e.getMessage());
+        }
+    }
+
+    private List<RotatedLog> rotatedLogs() {
+        var dir = properties.latestLogFile().getParent();
+        if (!Files.isDirectory(dir)) {
+            return List.of();
+        }
+        var since = LocalDate.now(properties.logZone()).minusDays(BACKFILL_DAYS);
+        try (var files = Files.list(dir)) {
+            return files.flatMap(path -> RotatedLog.of(path).stream())
+                    .filter(rotated -> !rotated.date().isBefore(since))
+                    .sorted(Comparator.comparing(RotatedLog::date).thenComparingInt(RotatedLog::index))
+                    .toList();
+        } catch (IOException e) {
+            log.warn("Could not list {}: {}", dir, e.getMessage());
+            return List.of();
+        }
+    }
+
+    private void loadRotated(RotatedLog rotated) {
+        try (var in = new GZIPInputStream(Files.newInputStream(rotated.path()))) {
+            var date = rotated.date();
+            var previous = LocalTime.MIN;
+            for (var line : new String(in.readAllBytes(), StandardCharsets.UTF_8).lines()
+                    .flatMap(line -> LogLineParser.parse(line, this::isPlayer).stream())
+                    .toList()) {
+                rememberJoin(line);
+                if (line.time().isBefore(previous)) {
+                    date = date.plusDays(1);
+                }
+                previous = line.time();
+                var event = toEvent(line, date);
+                add(event);
+                store(event);
+            }
+        } catch (IOException e) {
+            log.warn("Could not read {}: {}", rotated.path(), e.getMessage());
         }
     }
 
@@ -201,5 +250,15 @@ public class FeedServiceImpl implements FeedService {
             }
         }
         return -1;
+    }
+
+    private record RotatedLog(Path path, LocalDate date, int index) {
+
+        static Optional<RotatedLog> of(Path path) {
+            var matcher = ROTATED.matcher(path.getFileName().toString());
+            return matcher.matches()
+                    ? Optional.of(new RotatedLog(path, LocalDate.parse(matcher.group(1)), Integer.parseInt(matcher.group(2))))
+                    : Optional.empty();
+        }
     }
 }
