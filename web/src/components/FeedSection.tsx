@@ -32,7 +32,7 @@ function describe(event: FeedEvent): string {
 
 export function FeedSection({ events }: { events: FeedEvent[] }) {
   return (
-    <Section title="Acontecendo agora" icon={Radio} subtitle="Desde o último restart do servidor">
+    <Section title="Acontecendo agora" icon={Radio} subtitle="Os últimos acontecimentos do servidor">
       {events.length === 0 ? (
         <p className="py-6 text-center text-sm text-ink-muted">Nada por aqui ainda.</p>
       ) : (

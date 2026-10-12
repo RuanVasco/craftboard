@@ -60,5 +60,5 @@ export const STAT_DEFS: Record<string, StatDef> = {
   swim_one_cm: { label: 'Nadando', icon: Droplets, format: formatDistance },
   open_chest: { label: 'Baús abertos', icon: Package, format: count },
   leave_game: { label: 'Logins', icon: LogIn, format: count },
-  longest_session: { label: 'Sess�o mais longa', icon: Timer, format: formatSeconds },
+  longest_session: { label: 'Sessão mais longa', icon: Timer, format: formatSeconds },
 };
