@@ -45,7 +45,7 @@ class RconClientTest {
     private MinecraftProperties properties(String password) {
         var rcon = new MinecraftProperties.Rcon(true, "127.0.0.1", server.getLocalPort(), password,
                 Duration.ofSeconds(10), Duration.ofSeconds(60));
-        return new MinecraftProperties("../dev-data", "world", "localhost", ZoneId.of("UTC"), rcon);
+        return new MinecraftProperties("../dev-data", "world", "localhost", ZoneId.of("UTC"), null, rcon);
     }
 
     private void startFakeServer(String password) throws IOException {

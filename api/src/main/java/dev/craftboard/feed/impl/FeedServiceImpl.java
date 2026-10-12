@@ -85,7 +85,7 @@ public class FeedServiceImpl implements FeedService {
                         rememberJoin(line);
                         lines.add(line);
                     });
-            var lastWrite = Files.getLastModifiedTime(file).toInstant().atZone(properties.timezone());
+            var lastWrite = Files.getLastModifiedTime(file).toInstant().atZone(properties.logZone());
             datedBackwards(lines, lastWrite).forEach(event -> {
                 add(event);
                 store(event);
@@ -144,9 +144,9 @@ public class FeedServiceImpl implements FeedService {
     }
 
     private LocalDate liveDate(LogLine line) {
-        var now = ZonedDateTime.now(properties.timezone());
+        var now = ZonedDateTime.now(properties.logZone());
         var today = now.toLocalDate();
-        var candidate = today.atTime(line.time()).atZone(properties.timezone());
+        var candidate = today.atTime(line.time()).atZone(properties.logZone());
         return candidate.isAfter(now.plusMinutes(CLOCK_SKEW_MINUTES)) ? today.minusDays(1) : today;
     }
 
@@ -174,7 +174,7 @@ public class FeedServiceImpl implements FeedService {
                 line.player() == null ? null : OfflineUuid.of(line.player()),
                 line.detail(),
                 line.message(),
-                date.atTime(line.time()).atZone(properties.timezone()).toInstant());
+                date.atTime(line.time()).atZone(properties.logZone()).toInstant());
     }
 
     private void add(FeedEvent event) {

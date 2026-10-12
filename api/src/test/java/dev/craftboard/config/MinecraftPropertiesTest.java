@@ -45,6 +45,6 @@ class MinecraftPropertiesTest {
     }
 
     private MinecraftProperties properties() {
-        return new MinecraftProperties(serverDir.toString(), "world", "localhost", ZoneId.of("UTC"), null);
+        return new MinecraftProperties(serverDir.toString(), "world", "localhost", ZoneId.of("UTC"), null, null);
     }
 }

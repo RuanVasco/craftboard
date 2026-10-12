@@ -13,9 +13,15 @@ public record MinecraftProperties(
         @DefaultValue("../dev-data") String serverDir,
         @DefaultValue("world") String levelName,
         @DefaultValue("localhost") String publicAddress,
-        // Zone the Minecraft server logs in, and the one activity is bucketed by.
+        // Zone activity is bucketed by, and the one the server logs in unless logTimezone says otherwise.
         @DefaultValue("America/Sao_Paulo") ZoneId timezone,
+        // Docker images often run the server in UTC while players live elsewhere.
+        ZoneId logTimezone,
         @DefaultValue Rcon rcon) {
+
+    public ZoneId logZone() {
+        return logTimezone != null ? logTimezone : timezone;
+    }
 
     public Path serverPath() {
         return Path.of(serverDir);
