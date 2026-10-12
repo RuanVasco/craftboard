@@ -28,6 +28,17 @@ class LogLineParserTest {
     }
 
     @Test
+    void readsSystemChatLinesOfRecentVersions() {
+        assertThat(parse("[00:13:55] [Server thread/INFO]: System chat: Steve joined the game"))
+                .contains(new LogLine(LocalTime.of(0, 13, 55), FeedEventType.JOIN, "Steve", null, "Steve joined the game"));
+        assertThat(parse("[00:36:24] [Server thread/INFO]: System chat: Alex has made the advancement [Stone Age]"))
+                .hasValueSatisfying(line -> assertThat(line.detail()).isEqualTo("Stone Age"));
+        assertThat(parse("[01:00:00] [Server thread/INFO]: System chat: Steve was impaled on a stalagmite"))
+                .hasValueSatisfying(line -> assertThat(line.message()).isEqualTo("Steve was impaled on a stalagmite"));
+        assertThat(parse("[01:00:01] [Server thread/INFO]: [Not Secure] <Steve> Alex joined the game")).isEmpty();
+    }
+
+    @Test
     void readsDeathsOfKnownPlayersOnly() {
         assertThat(parse("[19:00:00] [Server thread/INFO]: Steve was slain by Zombie"))
                 .hasValueSatisfying(line -> {

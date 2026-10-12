@@ -13,6 +13,8 @@ public final class LogLineParser {
 
     // [18:22:31] [Server thread/INFO]: Steve joined the game
     private static final Pattern LINE = Pattern.compile("^\\[(\\d{2}:\\d{2}:\\d{2})] \\[Server thread/INFO][^:]*: (.+)$");
+    // Recent versions log join, leave, death and advancement messages with this prefix.
+    private static final String SYSTEM_CHAT = "System chat: ";
     private static final Pattern JOIN = Pattern.compile("^(\\S+) joined the game$");
     private static final Pattern LEAVE = Pattern.compile("^(\\S+) left the game$");
     private static final Pattern ADVANCEMENT =
@@ -34,6 +36,9 @@ public final class LogLineParser {
         }
         var time = LocalTime.parse(matcher.group(1));
         var message = matcher.group(2);
+        if (message.startsWith(SYSTEM_CHAT)) {
+            message = message.substring(SYSTEM_CHAT.length());
+        }
 
         if (message.startsWith("Done (")) {
             return Optional.of(new LogLine(time, FeedEventType.SERVER_START, null, null, message));
